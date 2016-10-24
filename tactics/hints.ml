@@ -660,8 +660,7 @@ let searchtable_add (name,db) =
 let current_db_names () = Hintdbmap.domain !searchtable
 let current_db () = Hintdbmap.bindings !searchtable
 
-let current_pure_db () =
-  List.map snd (Hintdbmap.bindings (Hintdbmap.remove "v62" !searchtable))
+let current_pure_db () = List.map snd (current_db ())
 
 let error_no_such_hint_database x =
   user_err ~hdr:"Hints" (str "No such Hint database: " ++ str x ++ str ".")
