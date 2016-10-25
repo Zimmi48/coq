@@ -221,6 +221,8 @@ val make_local_hint_db : env -> evar_map -> ?ts:transparent_state -> bool -> Tac
 
 val make_db_list : hint_db_name list -> hint_db list
 
+val make_db_list_from_names_or_list_all : (hint_db_name list) option -> hint_db list
+
 (** Initially created hint databases, for typeclasses and rewrite *)
 
 val typeclasses_db : hint_db_name

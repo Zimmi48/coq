@@ -405,17 +405,9 @@ let e_search_auto debug (in_depth,p) lems db_list gl =
 let eauto_with_bases ?(debug=Off) np lems db_list =
   tclTRY (e_search_auto debug np lems db_list)
 
-let eauto ?(debug=Off) np lems dbnames =
-  let db_list = make_db_list dbnames in
-  tclTRY (e_search_auto debug np lems db_list)
-
-let full_eauto ?(debug=Off) n lems gl =
-  let db_list = current_pure_db () in
-  tclTRY (e_search_auto debug n lems db_list) gl
-
-let gen_eauto ?(debug=Off) ?(dfs=true) ?(depth=(!default_search_depth)) lems = function
-  | None -> Proofview.V82.tactic (full_eauto ~debug (dfs, depth) lems)
-  | Some l -> Proofview.V82.tactic (eauto ~debug (dfs, depth) lems l)
+let gen_eauto ?(debug=Off) ?(dfs=true) ?(depth=(!default_search_depth)) lems dbnames =
+  let db_list = make_db_list_from_names_or_list_all dbnames in
+  Proofview.V82.tactic (eauto_with_bases ~debug (dfs, depth) lems db_list)
 
 let cons a l = a :: l
 

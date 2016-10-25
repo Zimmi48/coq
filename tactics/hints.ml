@@ -1289,6 +1289,10 @@ let make_db_list dbnames =
   in
   List.map lookup dbnames
 
+let make_db_list_from_names_or_list_all = function
+  | None -> current_pure_db ()
+  | Some dbnames -> make_db_list dbnames
+
 (**************************************************************************)
 (*                    Functions for printing the hints                    *)
 (**************************************************************************)
