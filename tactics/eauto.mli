@@ -27,7 +27,6 @@ val eauto_with_bases :
   bool * int ->
   Tacexpr.delayed_open_constr list -> hint_db list -> Proof_type.tactic
 
-val autounfold : hint_db_name list -> Locus.clause -> unit Proofview.tactic
-val autounfold_tac : hint_db_name list option -> Locus.clause -> unit Proofview.tactic
-val autounfold_one : hint_db_name list -> Locus.hyp_location option -> unit Proofview.tactic
+val autounfold : (hint_db_name list) option -> Locus.clause -> unit Proofview.tactic
+val autounfold_one : (hint_db_name list) option -> Locus.hyp_location option -> unit Proofview.tactic
 

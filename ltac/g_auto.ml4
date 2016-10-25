@@ -146,14 +146,14 @@ TACTIC EXTEND bfs_eauto
 END
 
 TACTIC EXTEND autounfold
-| [ "autounfold" hintbases(db) clause_dft_concl(cl) ] -> [ Eauto.autounfold_tac db cl ]
+| [ "autounfold" hintbases(db) clause_dft_concl(cl) ] -> [ Eauto.autounfold db cl ]
 END
 
 TACTIC EXTEND autounfold_one
 | [ "autounfold_one" hintbases(db) "in" hyp(id) ] ->
-    [ Eauto.autounfold_one (match db with None -> ["core"] | Some x -> "core"::x) (Some (id, Locus.InHyp)) ]
+    [ Eauto.autounfold_one db (Some (id, Locus.InHyp)) ]
 | [ "autounfold_one" hintbases(db) ] ->
-    [ Eauto.autounfold_one (match db with None -> ["core"] | Some x -> "core"::x) None ]
+    [ Eauto.autounfold_one db None ]
       END
 
 TACTIC EXTEND autounfoldify
@@ -161,7 +161,7 @@ TACTIC EXTEND autounfoldify
     let db = match Term.kind_of_term x with
       | Term.Const (c,_) -> Names.Label.to_string (Names.con_label c)
       | _ -> assert false
-    in Eauto.autounfold ["core";db] Locusops.onConcl 
+    in Eauto.autounfold (Some [db]) Locusops.onConcl
   ]
 END
 

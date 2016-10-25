@@ -412,10 +412,8 @@ let gen_eauto ?(debug=Off) ?(dfs=true) ?(depth=(!default_search_depth)) lems dbn
 let cons a l = a :: l
 
 let autounfolds db occs cls gl =
-  let unfolds = List.concat (List.map (fun dbname -> 
-    let db = try searchtable_map dbname 
-      with Not_found -> errorlabstrm "autounfold" (str "Unknown database " ++ str dbname)
-    in
+  let db = make_db_list_from_names_or_list_all db in
+  let unfolds = List.concat (List.map (fun db ->
     let (ids, csts) = Hint_db.unfolds db in
     let hyps = pf_ids_of_hyps gl in
     let ids = Idset.filter (fun id -> List.mem id hyps) ids in
@@ -432,15 +430,6 @@ let autounfold db cls =
     | OnConcl occs -> tac occs None)
     cls gl
   end
-
-let autounfold_tac db cls =
-  Proofview.tclUNIT () >>= fun () ->
-  let dbs = match db with
-  | None -> String.Set.elements (current_db_names ())
-  | Some [] -> ["core"]
-  | Some l -> l
-  in
-  autounfold dbs cls
 
 let unfold_head env (ids, csts) c = 
   let rec aux c = 
@@ -478,11 +467,9 @@ let autounfold_one db cl =
   Proofview.Goal.nf_enter { enter = begin fun gl ->
   let env = Proofview.Goal.env gl in
   let concl = Proofview.Goal.concl gl in
+  let db = make_db_list_from_names_or_list_all db in
   let st =
-    List.fold_left (fun (i,c) dbname -> 
-      let db = try searchtable_map dbname 
-	with Not_found -> errorlabstrm "autounfold" (str "Unknown database " ++ str dbname)
-      in
+    List.fold_left (fun (i,c) db ->
       let (ids, csts) = Hint_db.unfolds db in
 	(Id.Set.union ids i, Cset.union csts c)) (Id.Set.empty, Cset.empty) db
   in
