@@ -117,11 +117,7 @@ END
 (** Typeclasses eauto based tactics *)
 
 let typeclasses_eauto ~dfs depth dbnames =
-  let db_list =
-    match dbnames with
-    | None -> Hints.current_pure_db ()
-    | Some dbnames -> Hints.make_db_list dbnames
-  in
+  let db_list = Hints.make_db_list_from_names_or_list_all dbnames in
   let depth =
     match depth with
     | None -> !Auto.default_search_depth
