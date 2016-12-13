@@ -1327,6 +1327,14 @@ let occur_evar_upto_types sigma n c =
   in
   try occur_rec c; false with Occur -> true
 
+let map_constr_with_full_binders_with_pbty g f l pbty cstr =
+  match kind_of_term cstr with
+  | Prod (na, t, c) ->
+      let t' = f l None t in
+      let c' = f (g (Context.Rel.Declaration.LocalAssum (na,t)) l) pbty c in
+      if t==t' && c==c' then cstr else mkProd (na, t', c')
+  | _ -> map_constr_with_full_binders g (fun env c -> f env None c) l cstr
+
 (* We try to instantiate the evar assuming the body won't depend
  * on arguments that are not Rels or Vars, or appearing several times
  * (i.e. we tackle a generalization of Miller-Pfenning patterns unification)
@@ -1404,24 +1412,29 @@ let rec invert_definition conv_algo choose env evd pbty (evk,argsv as ev) rhs =
           evdref := evd;
           evar in
 
-  let rec imitate (env',k as envk) t =
+  let rec imitate (env',k as envk) pbty t =
     let t = whd_evar !evdref t in
     match kind_of_term t with
+    | Sort s when pbty != None && not choose ->
+       let src = evi.evar_source in
+       let e, _ = e_new_type_evar (Global.env ()) evdref univ_flexible_alg ~src in
+       evdref := add_conv_oriented_pb (pbty,Global.env (),e,t) !evdref;
+       e
     | Rel i when i>k ->
         let open Context.Rel.Declaration in
         (match Environ.lookup_rel (i-k) env' with
         | LocalAssum _ -> project_variable (mkRel (i-k))
         | LocalDef (_,b,_) ->
           try project_variable (mkRel (i-k))
-          with NotInvertibleUsingOurAlgorithm _ -> imitate envk (lift i b))
+          with NotInvertibleUsingOurAlgorithm _ -> imitate envk pbty (lift i b))
     | Var id ->
         (match Environ.lookup_named id env' with
         | LocalAssum _ -> project_variable t
         | LocalDef (_,b,_) ->
           try project_variable t
-          with NotInvertibleUsingOurAlgorithm _ -> imitate envk b)
+          with NotInvertibleUsingOurAlgorithm _ -> imitate envk pbty b)
     | LetIn (na,b,u,c) ->
-        imitate envk (subst1 b c)
+        imitate envk pbty (subst1 b c)
     | Evar (evk',args' as ev') ->
         if Evar.equal evk evk' then raise (OccurCheckIn (evd,rhs));
         (* Evar/Evar problem (but left evar is virtual) *)
@@ -1432,7 +1445,7 @@ let rec invert_definition conv_algo choose env evd pbty (evk,argsv as ev) rhs =
           evdref := evd;
           body
         with
-        | EvarSolvedOnTheFly (evd,t) -> evdref:=evd; imitate envk t
+        | EvarSolvedOnTheFly (evd,t) -> evdref:=evd; imitate envk pbty t
         | CannotProject (evd,ev') ->
           if not !progress then
             raise (NotEnoughInformationEvarEvar t);
@@ -1475,8 +1488,8 @@ let rec invert_definition conv_algo choose env evd pbty (evk,argsv as ev) rhs =
             let candidates =
               try
                 let t =
-                  map_constr_with_full_binders (fun d (env,k) -> push_rel d env, k+1)
-                    imitate envk t in
+                  map_constr_with_full_binders_with_pbty (fun d (env,k) -> push_rel d env, k+1)
+                    imitate envk pbty t in
                 t::l
               with e when CErrors.noncritical e -> l in
             (match candidates with
@@ -1488,8 +1501,8 @@ let rec invert_definition conv_algo choose env evd pbty (evk,argsv as ev) rhs =
               evar'')
         | None ->
            (* Evar/Rigid problem (or assimilated if not normal): we "imitate" *)
-	   map_constr_with_full_binders (fun d (env,k) -> push_rel d env, k+1)
-					imitate envk t
+	   map_constr_with_full_binders_with_pbty (fun d (env,k) -> push_rel d env, k+1)
+					imitate envk pbty t
   in
   let rhs = whd_beta evd rhs (* heuristic *) in
   let fast rhs = 
@@ -1509,9 +1522,9 @@ let rec invert_definition conv_algo choose env evd pbty (evk,argsv as ev) rhs =
       Idset.subset (collect_vars rhs) !names 
   in
   let body =
-    if fast rhs then nf_evar evd rhs
+    if fast rhs && pbty = None then nf_evar evd rhs
     else
-      let t' = imitate (env,0) rhs in
+      let t' = imitate (env,0) pbty rhs in
 	if !progress then
 	  (recheck_applications conv_algo (evar_env evi) evdref t'; t')
 	else t'
