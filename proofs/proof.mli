@@ -32,6 +32,16 @@
 (* Type of a proof. *)
 type proof
 
+(* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
+type prooftree = {
+  goals : int Evar.Map.t;
+  (* tactics are identified by their position in the list *)
+  (* we should use a unmutable array instead *)
+  tactics : (unit Proofview.tactic * unit Proofview.tactic option * Goal.goal list) list
+}
+
+val update_prooftree : (prooftree -> prooftree) -> proof -> proof
+
 (* Returns a stylised view of a proof for use by, for instance,
    ide-s. *)
 (* spiwack: the type of [proof] will change as we push more refined

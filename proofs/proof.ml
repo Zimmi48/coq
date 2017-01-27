@@ -96,6 +96,14 @@ let test_cond c k1 pw =
 let no_cond ?(loose_end=false) k = CondNo (loose_end, k)
 let done_cond ?(loose_end=false) k = CondDone (loose_end,k)
 
+(* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
+type prooftree = {
+  goals : int Evar.Map.t;
+  (* tactics are identified by their position in the list *)
+  (* we should use a unmutable array instead *)
+  tactics : (unit Proofview.tactic * unit Proofview.tactic option * Goal.goal list) list
+}
+
 (* Subpart of the type of proofs. It contains the parts of the proof which
    are under control of the undo mechanism *)
 type proof = {
@@ -103,6 +111,7 @@ type proof = {
   proofview: Proofview.proofview;
   (* Entry for the proofview *)
   entry : Proofview.entry;
+  prooftree: prooftree;
   (* History of the focusings, provides information on how
      to unfocus the proof and the extra information stored while focusing.
      The list is empty when the proof is fully unfocused. *)
@@ -114,6 +123,17 @@ type proof = {
   (* The initial universe context (for the statement) *)
   initial_euctx : Evd.evar_universe_context
 }
+
+let update_prooftree f p = { p with prooftree = f p.prooftree }
+
+let show_prooftree p =
+  let append_tac acc ((tac, end_tac, _) : unit Proofview.tactic * _ * _) =
+    Pp.(
+      acc ++ cut () ++ Ppvernac.pr_vernac tac ++
+        match end_tac with None -> str "." | Some _ -> str "..."
+    )
+  in
+  List.fold_left append_tac (Pp.str "Proof.") p.prooftree.tactics
 
 (*** General proof functions ***)
 
@@ -277,6 +297,7 @@ let start sigma goals =
   let pr = {
     proofview;
     entry;
+    prooftree = { goals = Evar.Map.empty; tactics = [] };
     focus_stack = [] ;
     shelf = [] ;
     given_up = [];
@@ -288,6 +309,7 @@ let dependent_start goals =
   let pr = {
     proofview;
     entry;
+    prooftree = { goals = Evar.Map.empty; tactics = [] };
     focus_stack = [] ;
     shelf = [] ;
     given_up = [];

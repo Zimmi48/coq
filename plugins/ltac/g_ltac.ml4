@@ -379,9 +379,23 @@ let vernac_solve n info tcom b =
     let with_end_tac = if b then Some etac else None in
     let global = match n with SelectAll | SelectList _ -> true | _ -> false in
     let info = Option.append info !print_info_trace in
-    let (p,status) =
-      Pfedit.solve n info (Tacinterp.hide_interp global tcom None) ?with_end_tac p
+    let goals_before = (Proof.map_structured_proof p (fun _ g -> g)).fg_goals in
+    let tac = Tacinterp.hide_interp global tcom None in
+    let (p,status) = Pfedit.solve n info tac ?with_end_tac p
     in
+    (* Update prooftree *)
+    let goals_after = (Proof.map_structured_proof p (fun _ g -> g)).fg_goals in
+    let solved_goals = List.subtract Evar.equal goals_before goals_after in
+    let new_goals = List.subtract Evar.equal goals_after goals_before in
+    let p =
+      p |> Proof.update_prooftree (fun { goals; tactics } ->
+               let tac_index = List.length tactics in
+               { (* fold_right or fold_left? *)
+                 goals = List.fold_left (fun gls gl -> Evar.Map.add gl tac_index gls)
+                                        goals solved_goals;
+                 tactics = List.append tactics [(tac,with_end_tac,new_goals)]
+               }
+             ) in
     (* in case a strict subtree was completed,
        go back to the top of the prooftree *)
     let p = Proof.maximal_unfocus Vernacentries.command_focus p in
