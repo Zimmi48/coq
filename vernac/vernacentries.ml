@@ -74,6 +74,11 @@ let show_universes () =
     Feedback.msg_notice (Termops.pr_evar_universe_context (Evd.evar_universe_context sigma));
     Feedback.msg_notice (str"Normalized constraints: " ++ Univ.pr_universe_context_set (Termops.pr_evd_level sigma) ctx)
 
+let show_prooftree () =
+  let p = Proof_global.give_me_the_proof () in
+  Feedback.msg_notice (Proof.show_prooftree p)
+
+
 (* Simulate the Intro(s) tactic *)
 let show_intro all =
   let open EConstr in

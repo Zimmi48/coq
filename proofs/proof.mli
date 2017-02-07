@@ -37,10 +37,11 @@ type prooftree = {
   goals : int Evar.Map.t;
   (* tactics are identified by their position in the list *)
   (* we should use a unmutable array instead *)
-  tactics : (unit Proofview.tactic * unit Proofview.tactic option * Goal.goal list) list
+  tactics : (Pp.std_ppcmds * Goal.goal list) list
 }
 
 val update_prooftree : (prooftree -> prooftree) -> proof -> proof
+val show_prooftree : proof -> Pp.std_ppcmds
 
 (* Returns a stylised view of a proof for use by, for instance,
    ide-s. *)

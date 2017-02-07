@@ -101,7 +101,7 @@ type prooftree = {
   goals : int Evar.Map.t;
   (* tactics are identified by their position in the list *)
   (* we should use a unmutable array instead *)
-  tactics : (unit Proofview.tactic * unit Proofview.tactic option * Goal.goal list) list
+  tactics : (Pp.std_ppcmds * Goal.goal list) list
 }
 
 (* Subpart of the type of proofs. It contains the parts of the proof which
@@ -127,13 +127,13 @@ type proof = {
 let update_prooftree f p = { p with prooftree = f p.prooftree }
 
 let show_prooftree p =
-  let append_tac acc ((tac, end_tac, _) : unit Proofview.tactic * _ * _) =
+  let append_tac acc (tac, _) =
     Pp.(
-      acc ++ cut () ++ Ppvernac.pr_vernac tac ++
-        match end_tac with None -> str "." | Some _ -> str "..."
+      acc ++ spc () ++ hov 2 tac
+(*        ++ match end_tac with None -> str "." | Some _ -> str "..."*)
     )
   in
-  List.fold_left append_tac (Pp.str "Proof.") p.prooftree.tactics
+  Pp.v 2 (List.fold_left append_tac (Pp.str "Proof.") p.prooftree.tactics)
 
 (*** General proof functions ***)
 
