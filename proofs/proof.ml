@@ -99,6 +99,7 @@ let done_cond ?(loose_end=false) k = CondDone (loose_end,k)
 
 type tactic_info = { tactic : Pp.std_ppcmds;
                      with_end_tac : bool;
+                     solved_goals : Goal.goal list;
                      new_goals : Goal.goal list }
 
 (* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
@@ -131,13 +132,30 @@ type proof = {
 
 let update_prooftree f p = { p with prooftree = f p.prooftree }
 
-let show_prooftree p =
-  let append_tac acc { tactic ; with_end_tac } =
-    Pp.(acc ++ spc () ++ hov 2 tactic
-        ++ if with_end_tac then str "..." else str ".")
+let show_prooftree { prooftree } =
+  let append_tac i (acc, active_goals) tac_info =
+    let goal_selector =
+      List.map_filter_i
+        (fun i g ->
+               if List.mem_f Evar.equal g tac_info.solved_goals then
+                 Some (i + 1)
+               else
+                 None)
+        active_goals
+      |> (fun l -> if List.is_empty l then [1] else l)
+      |> (fun l -> Pp.(prlist_with_sep pr_comma int l ++ str ":" ++ spc ()))
+    in
+    let ending = if tac_info.with_end_tac then "..." else "." in
+    let tactic_body =
+      Pp.(goal_selector ++ tac_info.tactic ++ str ending)
+    in
+    ( Pp.(acc ++ spc () ++ hov 2 tactic_body) ,
+      List.subtract Evar.equal active_goals tac_info.solved_goals
+      |> List.append tac_info.new_goals )
   in
-  Pp.v 2 (List.fold_left append_tac (Pp.str "Proof.") p.prooftree.tactics)
+  (List.fold_left_i append_tac 0 (Pp.str "Proof.", []) prooftree.tactics)
   (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
+  |> fst |> Pp.v 2
 
 (*** General proof functions ***)
 

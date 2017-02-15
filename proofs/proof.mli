@@ -34,6 +34,7 @@ type proof
 
 type tactic_info = { tactic : Pp.std_ppcmds;
                      with_end_tac : bool;
+                     solved_goals : Goal.goal list;
                      new_goals : Goal.goal list }
 
 (* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)

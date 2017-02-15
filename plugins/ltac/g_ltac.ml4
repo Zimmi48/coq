@@ -396,6 +396,7 @@ let vernac_solve n info tcom b =
                  tactics = List.append tactics
                                        [ { tactic = Pptactic.pr_raw_tactic tcom ;
                                            with_end_tac = b;
+                                           solved_goals;
                                            new_goals
                                        } ]
                }
