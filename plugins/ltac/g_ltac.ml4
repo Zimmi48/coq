@@ -393,7 +393,11 @@ let vernac_solve n info tcom b =
                { (* fold_right or fold_left? *)
                  goals = List.fold_left (fun gls gl -> Evar.Map.add gl tac_index gls)
                                         goals solved_goals;
-                 tactics = List.append tactics [(Pptactic.pr_raw_tactic tcom,new_goals)]
+                 tactics = List.append tactics
+                                       [ { tactic = Pptactic.pr_raw_tactic tcom ;
+                                           with_end_tac = b;
+                                           new_goals
+                                       } ]
                }
              ) in
     (* in case a strict subtree was completed,

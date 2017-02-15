@@ -32,12 +32,16 @@
 (* Type of a proof. *)
 type proof
 
+type tactic_info = { tactic : Pp.std_ppcmds;
+                     with_end_tac : bool;
+                     new_goals : Goal.goal list }
+
 (* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
 type prooftree = {
   goals : int Evar.Map.t;
   (* tactics are identified by their position in the list *)
   (* we should use a unmutable array instead *)
-  tactics : (Pp.std_ppcmds * Goal.goal list) list
+  tactics : tactic_info list
 }
 
 val update_prooftree : (prooftree -> prooftree) -> proof -> proof

@@ -96,12 +96,17 @@ let test_cond c k1 pw =
 let no_cond ?(loose_end=false) k = CondNo (loose_end, k)
 let done_cond ?(loose_end=false) k = CondDone (loose_end,k)
 
+
+type tactic_info = { tactic : Pp.std_ppcmds;
+                     with_end_tac : bool;
+                     new_goals : Goal.goal list }
+
 (* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
 type prooftree = {
   goals : int Evar.Map.t;
   (* tactics are identified by their position in the list *)
   (* we should use a unmutable array instead *)
-  tactics : (Pp.std_ppcmds * Goal.goal list) list
+  tactics : tactic_info list
 }
 
 (* Subpart of the type of proofs. It contains the parts of the proof which
@@ -127,13 +132,12 @@ type proof = {
 let update_prooftree f p = { p with prooftree = f p.prooftree }
 
 let show_prooftree p =
-  let append_tac acc (tac, _) =
-    Pp.(
-      acc ++ spc () ++ hov 2 tac
-(*        ++ match end_tac with None -> str "." | Some _ -> str "..."*)
-    )
+  let append_tac acc { tactic ; with_end_tac } =
+    Pp.(acc ++ spc () ++ hov 2 tactic
+        ++ if with_end_tac then str "..." else str ".")
   in
   Pp.v 2 (List.fold_left append_tac (Pp.str "Proof.") p.prooftree.tactics)
+  (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
 
 (*** General proof functions ***)
 
