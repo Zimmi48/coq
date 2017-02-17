@@ -113,6 +113,7 @@ type proof = {
   (* Entry for the proofview *)
   entry : Proofview.entry;
   prooftree: prooftree;
+  prooftree_context: (prooftree -> prooftree) list;
   (* History of the focusings, provides information on how
      to unfocus the proof and the extra information stored while focusing.
      The list is empty when the proof is fully unfocused. *)
@@ -251,16 +252,23 @@ let pop_focus pr =
 let _focus cond inf i j pr =
   let focused, context = Proofview.focus i j pr.proofview in
   let pr = push_focus cond inf context pr in
-  { pr with proofview = focused; prooftree = [] }
+  let focused_goals = pr.proofview |> Proofview.proofview |> fst in
+  { pr with proofview = focused;
+            prooftree = [];
+            prooftree_context =
+              (fun p -> (focused_goals, Bullet p) :: pr.prooftree)
+              :: pr.prooftree_context
+  }
 
 (* This function unfocuses the proof [pr], it raises [FullyUnfocused],
    if the proof is already fully unfocused.
    This function does not care about the condition of the current focus. *)
 let _unfocus pr =
-  let focused_goals = pr.proofview |> Proofview.proofview |> fst in
   let pr, (_,_,fc) = pop_focus pr in
    { pr with proofview = Proofview.unfocus fc pr.proofview;
-             prooftree = (focused_goals, Bullet pr.prooftree) }
+             prooftree = List.hd pr.prooftree_context pr.prooftree;
+             prooftree_context = List.tl pr.prooftree_context
+   }
 
 (* Focus command (focuses on the [i]th subgoal) *)
 (* spiwack: there could also, easily be a focus-on-a-range tactic, is there 
@@ -322,6 +330,7 @@ let start sigma goals =
     proofview;
     entry;
     prooftree = [];
+    prooftree_context = [];
     focus_stack = [] ;
     shelf = [] ;
     given_up = [];
@@ -334,6 +343,7 @@ let dependent_start goals =
     proofview;
     entry;
     prooftree = [];
+    prooftree_context = [];
     focus_stack = [] ;
     shelf = [] ;
     given_up = [];
