@@ -97,17 +97,12 @@ let no_cond ?(loose_end=false) k = CondNo (loose_end, k)
 let done_cond ?(loose_end=false) k = CondDone (loose_end,k)
 
 
-type tactic_info = { tactic : Pp.std_ppcmds;
-                     with_end_tac : bool;
-                     solved_goals : Goal.goal list;
-                     new_goals : Goal.goal list }
-
 (* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
-type prooftree = {
-  goals : int Evar.Map.t;
-  (* tactics are identified by their position in the list *)
-  (* we should use a unmutable array instead *)
-  tactics : tactic_info list
+type prooftree = (Goal.goal list * action) list
+and action = Tactic of Goal.goal list * tactic_info | Bullet of prooftree
+and tactic_info = {
+  tactic : Pp.std_ppcmds;
+  with_end_tac : bool
 }
 
 (* Subpart of the type of proofs. It contains the parts of the proof which
@@ -133,29 +128,34 @@ type proof = {
 let update_prooftree f p = { p with prooftree = f p.prooftree }
 
 let show_prooftree { prooftree } =
-  let append_tac i (acc, active_goals) tac_info =
-    let goal_selector =
-      List.map_filter_i
-        (fun i g ->
-               if List.mem_f Evar.equal g tac_info.solved_goals then
-                 Some (i + 1)
-               else
-                 None)
-        active_goals
-      |> (fun l -> if List.is_empty l then [1] else l)
-      |> (fun l -> Pp.(prlist_with_sep pr_comma int l ++ str ":" ++ spc ()))
-    in
-    let ending = if tac_info.with_end_tac then "..." else "." in
-    let tactic_body =
-      Pp.(goal_selector ++ tac_info.tactic ++ str ending)
-    in
-    ( Pp.(acc ++ spc () ++ hov 2 tactic_body) ,
-      List.subtract Evar.equal active_goals tac_info.solved_goals
-      |> List.append tac_info.new_goals )
+  let rec append_prooftree acc = List.fold_left_i append_tac 0 acc
+  and append_tac i (acc, active_goals) (solved_goals, action) =
+    match action with
+    | Tactic (new_goals, tac_info) ->
+       let goal_selector =
+         List.map_filter_i
+           (fun i g ->
+             if List.mem_f Evar.equal g solved_goals then
+               Some (i + 1)
+             else
+               None)
+           active_goals
+         |> (fun l -> if List.is_empty l then [1] else l)
+         |> (fun l -> Pp.(prlist_with_sep pr_comma int l ++ str ":" ++ spc ()))
+       in
+       let ending = if tac_info.with_end_tac then "..." else "." in
+       let tactic_body = Pp.(goal_selector ++ tac_info.tactic ++ str ending)
+       in
+       ( Pp.(acc ++ spc () ++ hov 2 tactic_body) ,
+         List.subtract Evar.equal active_goals solved_goals
+         |> List.append new_goals )
+    | Bullet prooftree ->
+        append_prooftree (Pp.(acc ++ str "-" ++ spc ()), active_goals) prooftree
   in
-  (List.fold_left_i append_tac 0 (Pp.str "Proof.", []) prooftree.tactics)
+  append_prooftree (Pp.str "Proof.", []) (List.rev prooftree)
   (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
   |> fst |> Pp.v 2
+
 
 (*** General proof functions ***)
 
@@ -251,14 +251,16 @@ let pop_focus pr =
 let _focus cond inf i j pr =
   let focused, context = Proofview.focus i j pr.proofview in
   let pr = push_focus cond inf context pr in
-  { pr with proofview = focused }
+  { pr with proofview = focused; prooftree = [] }
 
 (* This function unfocuses the proof [pr], it raises [FullyUnfocused],
    if the proof is already fully unfocused.
    This function does not care about the condition of the current focus. *)
 let _unfocus pr =
+  let focused_goals = pr.proofview |> Proofview.proofview |> fst in
   let pr, (_,_,fc) = pop_focus pr in
-   { pr with proofview = Proofview.unfocus fc pr.proofview }
+   { pr with proofview = Proofview.unfocus fc pr.proofview;
+             prooftree = (focused_goals, Bullet pr.prooftree) }
 
 (* Focus command (focuses on the [i]th subgoal) *)
 (* spiwack: there could also, easily be a focus-on-a-range tactic, is there 
@@ -319,7 +321,7 @@ let start sigma goals =
   let pr = {
     proofview;
     entry;
-    prooftree = { goals = Evar.Map.empty; tactics = [] };
+    prooftree = [];
     focus_stack = [] ;
     shelf = [] ;
     given_up = [];
@@ -331,7 +333,7 @@ let dependent_start goals =
   let pr = {
     proofview;
     entry;
-    prooftree = { goals = Evar.Map.empty; tactics = [] };
+    prooftree = [];
     focus_stack = [] ;
     shelf = [] ;
     given_up = [];

@@ -388,18 +388,11 @@ let vernac_solve n info tcom b =
     let solved_goals = List.subtract Evar.equal goals_before goals_after in
     let new_goals = List.subtract Evar.equal goals_after goals_before in
     let p =
-      p |> Proof.update_prooftree (fun { goals; tactics } ->
-               let tac_index = List.length tactics in
-               { (* fold_right or fold_left? *)
-                 goals = List.fold_left (fun gls gl -> Evar.Map.add gl tac_index gls)
-                                        goals solved_goals;
-                 tactics = List.append tactics
-                                       [ { tactic = Pptactic.pr_raw_tactic tcom ;
-                                           with_end_tac = b;
-                                           solved_goals;
-                                           new_goals
-                                       } ]
-               }
+      p |> Proof.update_prooftree (fun actions ->
+               ( solved_goals,
+                 Tactic ( new_goals,
+                          { tactic = Pptactic.pr_raw_tactic tcom ;
+                            with_end_tac = b } ) ) :: actions
              ) in
     (* in case a strict subtree was completed,
        go back to the top of the prooftree *)
