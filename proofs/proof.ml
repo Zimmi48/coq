@@ -128,36 +128,6 @@ type proof = {
 
 let update_prooftree f p = { p with prooftree = f p.prooftree }
 
-let show_prooftree { prooftree } =
-  let rec append_prooftree acc = List.fold_left_i append_tac 0 acc
-  and append_tac i (acc, active_goals) (solved_goals, action) =
-    match action with
-    | Tactic (new_goals, tac_info) ->
-       let goal_selector =
-         List.map_filter_i
-           (fun i g ->
-             if List.mem_f Evar.equal g solved_goals then
-               Some (i + 1)
-             else
-               None)
-           active_goals
-         |> (fun l -> if List.is_empty l then [1] else l)
-         |> (fun l -> Pp.(prlist_with_sep pr_comma int l ++ str ":" ++ spc ()))
-       in
-       let ending = if tac_info.with_end_tac then "..." else "." in
-       let tactic_body = Pp.(goal_selector ++ tac_info.tactic ++ str ending)
-       in
-       ( Pp.(acc ++ spc () ++ hov 2 tactic_body) ,
-         List.subtract Evar.equal active_goals solved_goals
-         |> List.append new_goals )
-    | Bullet prooftree ->
-        append_prooftree (Pp.(acc ++ str "-" ++ spc ()), active_goals) prooftree
-  in
-  append_prooftree (Pp.str "Proof.", []) (List.rev prooftree)
-  (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
-  |> fst |> Pp.v 2
-
-
 (*** General proof functions ***)
 
 let proof p =
@@ -386,6 +356,52 @@ let compact p =
   { p with proofview; entry }
 
 (*** Function manipulation proof extra informations ***)
+
+let show_prooftree p =
+  let { prooftree } = unfocus end_of_stack_kind p () in
+  let rec show_prooftree_aux acc active_goals = function
+    | [] -> acc
+    | (solved_goals, action) :: action_list ->
+       let pp_action = show_action active_goals action in
+       show_prooftree_aux
+         (Pp.(pp_action ++ acc))
+         (List.subtract Evar.equal active_goals solved_goals)
+         action_list
+  and show_action active_goals = function
+    | Tactic (new_goals, tac_info) -> failwith "TODO"
+    | Bullet prooftree -> failwith "TODO"
+  in
+  show_prooftree_aux (Pp.str "Proof.") [] prooftree |> Pp.v 2
+
+(*
+  let rec append_prooftree acc = List.fold_left_i append_tac 0 acc
+  and append_tac i (acc, active_goals) (solved_goals, action) =
+    match action with
+    | Tactic (new_goals, tac_info) ->
+       let goal_selector =
+         List.map_filter_i
+           (fun i g ->
+             if List.mem_f Evar.equal g solved_goals then
+               Some (i + 1)
+             else
+               None)
+           active_goals
+         |> (fun l -> if List.is_empty l then [1] else l)
+         |> (fun l -> Pp.(prlist_with_sep pr_comma int l ++ str ":" ++ spc ()))
+       in
+       let ending = if tac_info.with_end_tac then "..." else "." in
+       let tactic_body = Pp.(goal_selector ++ tac_info.tactic ++ str ending)
+       in
+       ( Pp.(acc ++ spc () ++ hov 2 tactic_body) ,
+         List.subtract Evar.equal active_goals solved_goals
+         |> List.append new_goals )
+    | Bullet prooftree ->
+        append_prooftree (Pp.(acc ++ str "-" ++ spc ()), active_goals) prooftree
+  in
+  append_prooftree (Pp.str "Proof.", []) prooftree
+  (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
+  |> fst |> Pp.v 2
+ *)
 
 (*** Tactics ***)
 
