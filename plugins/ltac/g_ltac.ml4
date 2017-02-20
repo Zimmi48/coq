@@ -387,7 +387,7 @@ let vernac_solve n info tcom b =
     let goals_after = (Proof.map_structured_proof p (fun _ g -> g)).fg_goals in
     let active_goals = List.map
                 (fun g -> { Proof.goal = g;
-                            Proof.solved = List.mem_f Evar.equal g goals_after })
+                            Proof.solved = not (List.mem_f Evar.equal g goals_after) })
                 goals_before in
     let new_goals = List.subtract Evar.equal goals_after goals_before in
     let p =
