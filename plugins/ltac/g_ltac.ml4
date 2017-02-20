@@ -385,14 +385,17 @@ let vernac_solve n info tcom b =
     in
     (* Update prooftree *)
     let goals_after = (Proof.map_structured_proof p (fun _ g -> g)).fg_goals in
-    let solved_goals = List.subtract Evar.equal goals_before goals_after in
+    let active_goals = List.map
+                (fun g -> { Proof.goal = g;
+                            Proof.solved = List.mem_f Evar.equal g goals_after })
+                goals_before in
     let new_goals = List.subtract Evar.equal goals_after goals_before in
     let p =
       p |> Proof.update_prooftree (fun actions ->
-               ( solved_goals,
-                 Tactic ( new_goals,
-                          { tactic = Pptactic.pr_raw_tactic tcom ;
-                            with_end_tac = b } ) ) :: actions
+               { active_goals;
+                 action = Tactic ( new_goals,
+                                   { tactic = Pptactic.pr_raw_tactic tcom ;
+                                     with_end_tac = b } ) } :: actions
              ) in
     (* in case a strict subtree was completed,
        go back to the top of the prooftree *)

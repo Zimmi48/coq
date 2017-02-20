@@ -96,9 +96,10 @@ let test_cond c k1 pw =
 let no_cond ?(loose_end=false) k = CondNo (loose_end, k)
 let done_cond ?(loose_end=false) k = CondDone (loose_end,k)
 
-
 (* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
-type prooftree = (Goal.goal list * action) list
+type prooftree = action_on_goals list
+and action_on_goals = { active_goals : goal_info list; action: action }
+and goal_info = { goal : Goal.goal; solved : bool }
 and action = Tactic of Goal.goal list * tactic_info | Bullet of prooftree
 and tactic_info = {
   tactic : Pp.std_ppcmds;
@@ -221,12 +222,18 @@ let pop_focus pr =
 (* This function focuses the proof [pr] between indices [i] and [j] *)
 let _focus cond inf i j pr =
   let focused, context = Proofview.focus i j pr.proofview in
+  let active_goals = pr.proofview |> Proofview.proofview |> fst in
   let pr = push_focus cond inf context pr in
   let focused_goals = pr.proofview |> Proofview.proofview |> fst in
+  let active_goals = List.map
+                (fun g -> { goal = g;
+                            solved = List.mem_f Evar.equal g focused_goals })
+                active_goals
+  in
   { pr with proofview = focused;
             prooftree = [];
             prooftree_context =
-              (fun p -> (focused_goals, Bullet p) :: pr.prooftree)
+              (fun p -> { active_goals; action = Bullet p } :: pr.prooftree)
               :: pr.prooftree_context
   }
 
@@ -359,49 +366,28 @@ let compact p =
 
 let show_prooftree p =
   let { prooftree } = unfocus end_of_stack_kind p () in
-  let rec show_prooftree_aux acc active_goals = function
+  let rec show_prooftree_aux acc = function
     | [] -> acc
-    | (solved_goals, action) :: action_list ->
+    | { active_goals; action } :: action_list ->
        let pp_action = show_action active_goals action in
-       show_prooftree_aux
-         (Pp.(pp_action ++ acc))
-         (List.subtract Evar.equal active_goals solved_goals)
-         action_list
+       show_prooftree_aux (Pp.(pp_action ++ spc () ++ acc)) action_list
   and show_action active_goals = function
-    | Tactic (new_goals, tac_info) -> failwith "TODO"
-    | Bullet prooftree -> failwith "TODO"
-  in
-  show_prooftree_aux (Pp.str "Proof.") [] prooftree |> Pp.v 2
-
-(*
-  let rec append_prooftree acc = List.fold_left_i append_tac 0 acc
-  and append_tac i (acc, active_goals) (solved_goals, action) =
-    match action with
     | Tactic (new_goals, tac_info) ->
        let goal_selector =
-         List.map_filter_i
-           (fun i g ->
-             if List.mem_f Evar.equal g solved_goals then
-               Some (i + 1)
-             else
-               None)
+         if List.for_all (fun { solved } -> solved) active_goals then
+           Pp.str "all"
+         else
            active_goals
-         |> (fun l -> if List.is_empty l then [1] else l)
-         |> (fun l -> Pp.(prlist_with_sep pr_comma int l ++ str ":" ++ spc ()))
+           |> List.map_filter_i (fun i { solved } -> if solved then Some (i + 1) else None)
+           |> Pp.prlist_with_sep Pp.pr_comma Pp.int
        in
        let ending = if tac_info.with_end_tac then "..." else "." in
-       let tactic_body = Pp.(goal_selector ++ tac_info.tactic ++ str ending)
-       in
-       ( Pp.(acc ++ spc () ++ hov 2 tactic_body) ,
-         List.subtract Evar.equal active_goals solved_goals
-         |> List.append new_goals )
+       Pp.(hov 2 (goal_selector ++ str ":" ++ spc () ++ tac_info.tactic ++ str ending))
     | Bullet prooftree ->
-        append_prooftree (Pp.(acc ++ str "-" ++ spc ()), active_goals) prooftree
+       Pp.(v 2 (str "-" ++ spc () ++ show_prooftree_aux (str "") prooftree))
   in
-  append_prooftree (Pp.str "Proof.", []) prooftree
   (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
-  |> fst |> Pp.v 2
- *)
+  Pp.(v 2 (str "Proof." ++ spc () ++ show_prooftree_aux (str "") prooftree))
 
 (*** Tactics ***)
 
