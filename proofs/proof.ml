@@ -366,28 +366,32 @@ let compact p =
 
 let show_prooftree p =
   let { prooftree } = unfocus end_of_stack_kind p () in
+  let open Pp in
   let rec show_prooftree_aux acc = function
     | [] -> acc
     | { active_goals; action } :: action_list ->
        let pp_action = show_action active_goals action in
-       show_prooftree_aux (Pp.(pp_action ++ spc () ++ acc)) action_list
+       show_prooftree_aux (pp_action ++ spc () ++ acc) action_list
   and show_action active_goals = function
     | Tactic (new_goals, tac_info) ->
        let goal_selector =
-         if List.for_all (fun { solved } -> solved) active_goals then
-           Pp.str "all"
+         if List.length active_goals == 1 then str ""
+         else if List.for_all (fun { solved } -> solved) active_goals then
+           str "all:" ++ spc ()
          else
-           active_goals
-           |> List.map_filter_i (fun i { solved } -> if solved then Some (i + 1) else None)
-           |> Pp.prlist_with_sep Pp.pr_comma Pp.int
+           ( active_goals
+             |> List.map_filter_i
+                  (fun i { solved } -> if solved then Some (i + 1) else None)
+             |> prlist_with_sep pr_comma int
+           ) ++ str ":" ++ spc ()
        in
        let ending = if tac_info.with_end_tac then "..." else "." in
-       Pp.(hov 2 (goal_selector ++ str ":" ++ spc () ++ tac_info.tactic ++ str ending))
+       hov 2 (goal_selector ++ tac_info.tactic ++ str ending)
     | Bullet prooftree ->
-       Pp.(v 2 (str "-" ++ spc () ++ show_prooftree_aux (str "") prooftree))
+       v 2 (str "-" ++ spc () ++ show_prooftree_aux (str "") prooftree)
   in
   (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
-  Pp.(v 2 (str "Proof." ++ spc () ++ show_prooftree_aux (str "") prooftree))
+  v 2 (str "Proof." ++ spc () ++ show_prooftree_aux (str "") prooftree)
 
 (*** Tactics ***)
 
