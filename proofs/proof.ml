@@ -367,31 +367,43 @@ let compact p =
 let show_prooftree p =
   let { prooftree } = unfocus end_of_stack_kind p () in
   let open Pp in
-  let rec show_prooftree_aux acc = function
-    | [] -> acc
-    | { active_goals; action } :: action_list ->
-       let pp_action = show_action active_goals action in
-       show_prooftree_aux (pp_action ++ spc () ++ acc) action_list
-  and show_action active_goals = function
+  let rec show_prooftree_aux depth action_list =
+    action_list
+    |> List.rev
+    |> prlist_with_sep
+         spc
+         ( fun { active_goals; action } -> show_action depth active_goals action)
+  and show_action depth active_goals = function
     | Tactic (new_goals, tac_info) ->
        let goal_selector =
          if List.length active_goals == 1 then str ""
          else if List.for_all (fun { solved } -> solved) active_goals then
            str "all:" ++ spc ()
          else
-           ( active_goals
-             |> List.map_filter_i
-                  (fun i { solved } -> if solved then Some (i + 1) else None)
-             |> prlist_with_sep pr_comma int
-           ) ++ str ":" ++ spc ()
+           active_goals
+           |> List.map_filter_i
+                (fun i { solved } -> if solved then Some (i + 1) else None)
+           |> prlist_with_sep pr_comma int
+           |> (fun p -> p ++ str ":" ++ spc ())
        in
        let ending = if tac_info.with_end_tac then "..." else "." in
-       hov 2 (goal_selector ++ tac_info.tactic ++ str ending)
+       hov 0 (goal_selector ++ tac_info.tactic ++ str ending)
     | Bullet prooftree ->
-       v 2 (str "-" ++ spc () ++ show_prooftree_aux (str "") prooftree)
+       let pp_bullet, indent =
+         if depth = 0 then
+           str "", 0
+         else
+           let depth3 = depth / 3 in
+           ( (if depth mod 3 = 1 then '-' else if depth mod 3 = 2 then '+' else '*')
+             |> String.make (1 + depth3)
+             |> str
+             |> (fun p -> p ++ str " ")
+           , 2 + depth3 )
+       in
+       v indent (pp_bullet ++ show_prooftree_aux (depth + 1) prooftree)
   in
   (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
-  v 2 (str "Proof." ++ spc () ++ show_prooftree_aux (str "") prooftree)
+  v 2 (str "Proof." ++ spc () ++ show_prooftree_aux 0 prooftree)
 
 (*** Tactics ***)
 
