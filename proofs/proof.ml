@@ -364,6 +364,32 @@ let compact p =
 
 (*** Function manipulation proof extra informations ***)
 
+(* This is not going to work, we really need to explore the DAG
+let add_bullets p =
+  let { prooftree } = unfocus end_of_stack_kind p () in
+  let rec add_bullets_aux acc ok = function
+    | [] -> List.rev acc
+    | { active_goals; action = Bullet prooftree } :: action_list ->
+       add_bullets_aux
+         ( { active_goals;
+             action = Bullet (add_bullets_aux [] true prooftree) }
+           :: acc )
+         ok action_list
+    | { active_goals = { solved } :: goals ;
+        action = Tactic (new_goals, tac_info) }
+      :: action_list
+         when ok && solved && not (List.exists (fun g -> g.solved) goals) ->
+       failwith "TODO"
+    | action :: action_list ->
+       add_bullets_aux (action :: acc) false action_list
+  in
+  add_bullets_aux [] true prooftree
+ *)
+
+(* This is buggy with braces. FIXME
+   To know whether to put braces or bullets, look at the next actions.
+   If all of them are Focus, then use bullets. Otherwise, use braces.
+*)
 let show_prooftree p =
   let { prooftree } = unfocus end_of_stack_kind p () in
   let open Pp in
