@@ -34,11 +34,11 @@ type proof
 
 
 (* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
-(* Proof tree is actually a rooted alternated DAG because of multigoal tactics *)
 type prooftree = action_on_goals list
 and action_on_goals = { active_goals : goal_info list; action: action }
 and goal_info = { goal : Goal.goal; solved : bool }
-and action = Tactic of Goal.goal list * tactic_info | Bullet of prooftree
+and action = Tactic of Goal.goal list * tactic_info | Focus of prooftree
+(* The Unfocus command is not supported *)
 and tactic_info = {
   tactic : Pp.std_ppcmds;
   with_end_tac : bool

@@ -100,7 +100,8 @@ let done_cond ?(loose_end=false) k = CondDone (loose_end,k)
 type prooftree = action_on_goals list
 and action_on_goals = { active_goals : goal_info list; action: action }
 and goal_info = { goal : Goal.goal; solved : bool }
-and action = Tactic of Goal.goal list * tactic_info | Bullet of prooftree
+and action = Tactic of Goal.goal list * tactic_info | Focus of prooftree
+(* The Unfocus command is not supported *)
 and tactic_info = {
   tactic : Pp.std_ppcmds;
   with_end_tac : bool
@@ -233,7 +234,7 @@ let _focus cond inf i j pr =
   { pr with proofview = focused;
             prooftree = [];
             prooftree_context =
-              (fun p -> { active_goals; action = Bullet p } :: pr.prooftree)
+              (fun p -> { active_goals; action = Focus p } :: pr.prooftree)
               :: pr.prooftree_context
   }
 
@@ -414,7 +415,7 @@ let show_prooftree p =
        in
        let ending = if tac_info.with_end_tac then "..." else "." in
        hov 0 (goal_selector ++ tac_info.tactic ++ str ending)
-    | Bullet prooftree ->
+    | Focus prooftree ->
        let pp_bullet, indent =
          if depth = 0 then
            str "", 0
