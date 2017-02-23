@@ -387,20 +387,23 @@ let add_bullets p =
   add_bullets_aux [] true prooftree
  *)
 
-(* This is buggy with braces. FIXME
-   To know whether to put braces or bullets, look at the next actions.
-   If all of them are Focus, then use bullets. Otherwise, use braces.
-*)
+(* Bug: when calling Show Tree before closing braces "cannot be unfocused this way" *)
+type focus_kind_and_depth = ProofBegins | Brace | Bullet of int
 let show_prooftree p =
   let { prooftree } = unfocus end_of_stack_kind p () in
   let open Pp in
-  let rec show_prooftree_aux depth action_list =
-    action_list
-    |> List.rev
-    |> prlist_with_sep
-         spc
-         ( fun { active_goals; action } -> show_action depth active_goals action)
-  and show_action depth active_goals = function
+  let rec show_prooftree_aux focus_kind_and_depth acc = function
+    | [] -> acc
+    | { active_goals; action } :: action_list ->
+       let pp_action = show_action focus_kind_and_depth active_goals action in
+       let spacing = if List.is_empty action_list then str "" else spc () in
+       let focus_kind_and_depth =
+         match action with
+         | Focus _ -> focus_kind_and_depth
+         | _ -> Brace
+       in
+       show_prooftree_aux focus_kind_and_depth (spacing ++ pp_action ++ acc) action_list
+  and show_action focus_kind_and_depth active_goals = function
     | Tactic (new_goals, tac_info) ->
        let goal_selector =
          if List.length active_goals == 1 then str ""
@@ -416,21 +419,23 @@ let show_prooftree p =
        let ending = if tac_info.with_end_tac then "..." else "." in
        hov 0 (goal_selector ++ tac_info.tactic ++ str ending)
     | Focus prooftree ->
-       let pp_bullet, indent =
-         if depth = 0 then
-           str "", 0
-         else
-           let depth3 = depth / 3 in
-           ( (if depth mod 3 = 1 then '-' else if depth mod 3 = 2 then '+' else '*')
-             |> String.make (1 + depth3)
-             |> str
-             |> (fun p -> p ++ str " ")
-           , 2 + depth3 )
-       in
-       v indent (pp_bullet ++ show_prooftree_aux (depth + 1) prooftree)
+       begin match focus_kind_and_depth with
+       | ProofBegins ->
+          v 0 (show_prooftree_aux (Bullet 0) (str "") prooftree)
+       | Brace ->
+          str "{ " ++ v 0 (show_prooftree_aux (Bullet 0) (str "") prooftree) ++ str " }"
+       | Bullet d ->
+          let bullet_kind =
+            if d mod 3 = 0 then '-' else if d mod 3 = 1 then '+' else '*'
+          in
+          let bullet_size = 1 + d / 3 in
+          v (bullet_size + 1)
+            (str (String.make bullet_size bullet_kind) ++ str " "
+             ++ show_prooftree_aux (Bullet (d + 1)) (str "") prooftree)
+       end
   in
   (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
-  v 2 (str "Proof." ++ spc () ++ show_prooftree_aux 0 prooftree)
+  v 2 (str "Proof." ++ spc () ++ show_prooftree_aux ProofBegins (str "") prooftree)
 
 (*** Tactics ***)
 
