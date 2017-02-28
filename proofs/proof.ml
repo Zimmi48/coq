@@ -466,6 +466,7 @@ let add_focus prooftree =
 type focus_kind_and_depth = ProofBegins | Brace | Bullet of int
 let show_prooftree p =
   let { prooftree } = unfocus end_of_stack_kind p () in
+  let prooftree = add_focus prooftree in
   let open Pp in
   let rec show_prooftree_aux focus_kind_and_depth acc = function
     | [] -> acc
