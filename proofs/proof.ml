@@ -365,27 +365,65 @@ let compact p =
 
 (*** Function manipulation proof extra informations ***)
 
-(* This is not going to work, we really need to explore the DAG
-let add_bullets p =
+let update_active_goals : action list -> prooftree = function
+  | _ -> failwith "TODO"
+
+let add_focus p : prooftree =
   let { prooftree } = unfocus end_of_stack_kind p () in
-  let rec add_bullets_aux acc ok = function
-    | [] -> List.rev acc
-    | { active_goals; action = Bullet prooftree } :: action_list ->
-       add_bullets_aux
-         ( { active_goals;
-             action = Bullet (add_bullets_aux [] true prooftree) }
-           :: acc )
-         ok action_list
-    | { active_goals = { solved } :: goals ;
-        action = Tactic (new_goals, tac_info) }
-      :: action_list
-         when ok && solved && not (List.exists (fun g -> g.solved) goals) ->
-       failwith "TODO"
-    | action :: action_list ->
-       add_bullets_aux (action :: acc) false action_list
+  (* add_focus_aux after before
+     Preconditions:
+     - after contains a list of ( a list of goals to
+     be solved together , a list of actions to solve them )
+     - before contains a proof script
+     - the goals listed by after are exactly those remaining
+     when applying the script before.
+     - no goal appears twice in after
+     Postconditions:
+     - returns a proofscript with focusing added
+   *)
+  let rec add_focus_aux after = function
+    | [] ->
+       begin match after with
+       | [ ( [ _initial_goal ] , script ) ] ->
+          update_active_goals script
+       | _ -> assert false
+       end
+    | { active_goals; action } :: before ->
+       let solved_goals =
+         List.map_filter
+           (fun { goal; solved } -> if solved then Some goal else None)
+           active_goals
+       in
+       match action with
+       | Focus _ ->
+          add_focus_aux ( (solved_goals, [ action ]) :: after ) before
+       | Tactic (new_goals, _) as tac ->
+          let independent, dependent =
+            List.partition
+              (fun (goals, _) ->
+                List.is_empty (List.intersect Evar.equal goals new_goals))
+              after
+          in
+          let dependent_script =
+            dependent |> List.map snd |> List.concat |> List.cons tac
+          in
+          let dependent_goals =
+            dependent
+            |> List.map fst
+            |> List.concat
+            |> (fun goals -> List.subtract Evar.equal goals new_goals)
+            |> List.append solved_goals
+          in
+          let dependent_script =
+            match dependent_goals with
+            | [ goal ] ->
+               [ Focus (update_active_goals dependent_script) ]
+            | _ ->
+               dependent_script
+          in
+          add_focus_aux ( (dependent_goals, dependent_script) :: after) before
   in
-  add_bullets_aux [] true prooftree
- *)
+  add_focus_aux [] prooftree
 
 (* Bug: when calling Show Tree before closing braces "cannot be unfocused this way" *)
 type focus_kind_and_depth = ProofBegins | Brace | Bullet of int
