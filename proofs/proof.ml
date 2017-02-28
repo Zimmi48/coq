@@ -365,15 +365,47 @@ let compact p =
 
 (*** Function manipulation proof extra informations ***)
 
-let update_active_goals : action list -> prooftree = function
-  | _ -> failwith "TODO"
+let prooftree_from_script script =
+  let rec prooftree_and_active_goals = function
+    | [] -> [] , []
+    | [ solved_goals, action ] ->
+       [ { active_goals =
+             List.map (fun goal -> { goal ; solved = true }) solved_goals ;
+           action } ] ,
+       begin match action with
+       | Tactic (new_goals, _) -> new_goals
+       | Focus _ -> []
+       end
+    | ( solved_goals, action ) :: action_list ->
+       let prooftree, active_goals = prooftree_and_active_goals action_list in
+       { active_goals =
+           List.map
+             (fun goal ->
+               { goal ; solved = List.mem_f Evar.equal goal solved_goals })
+             active_goals ;
+         action } :: prooftree ,
+       begin match action with
+       | Tactic (new_goals, _) ->
+          assert (List.for_all (fun x -> List.mem x active_goals) solved_goals);
+          List.append
+            (List.subtract Evar.equal active_goals solved_goals)
+            new_goals
+       | Focus _ ->
+          List.subtract Evar.equal active_goals solved_goals
+       end
+  in
+  prooftree_and_active_goals script |> fst
 
-let add_focus p : prooftree =
-  let { prooftree } = unfocus end_of_stack_kind p () in
+let add_focus prooftree =
   (* add_focus_aux after before
      Preconditions:
      - after contains a list of ( a list of goals to
      be solved together , a list of actions to solve them )
+     Each action is paired with the exact list of goals it solves,
+     instead of being paired with the larger list of active goals,
+     which will allow moving actions around.
+     update_active_goals is then used to compute the list of active
+     make a real prooftree.
      - before contains a proof script
      - the goals listed by after are exactly those remaining
      when applying the script before.
@@ -385,7 +417,7 @@ let add_focus p : prooftree =
     | [] ->
        begin match after with
        | [ ( [ _initial_goal ] , script ) ] ->
-          update_active_goals script
+          prooftree_from_script script
        | _ -> assert false
        end
     | { active_goals; action } :: before ->
@@ -396,7 +428,9 @@ let add_focus p : prooftree =
        in
        match action with
        | Focus _ ->
-          add_focus_aux ( (solved_goals, [ action ]) :: after ) before
+          add_focus_aux
+            ( (solved_goals, [ solved_goals, action ]) :: after )
+            before
        | Tactic (new_goals, _) as tac ->
           let independent, dependent =
             List.partition
@@ -405,7 +439,10 @@ let add_focus p : prooftree =
               after
           in
           let dependent_script =
-            dependent |> List.map snd |> List.concat |> List.cons tac
+            dependent
+            |> List.map snd
+            |> List.concat
+            |> List.cons (solved_goals, tac)
           in
           let dependent_goals =
             dependent
@@ -417,7 +454,7 @@ let add_focus p : prooftree =
           let dependent_script =
             match dependent_goals with
             | [ goal ] ->
-               [ Focus (update_active_goals dependent_script) ]
+               [ dependent_goals, Focus (prooftree_from_script dependent_script) ]
             | _ ->
                dependent_script
           in
