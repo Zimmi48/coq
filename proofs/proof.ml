@@ -378,6 +378,7 @@ let prooftree_from_script script =
        end
     | ( solved_goals, action ) :: action_list ->
        let prooftree, active_goals = prooftree_and_active_goals action_list in
+       (* assert (List.for_all (fun x -> List.mem x active_goals) solved_goals); *)
        { active_goals =
            List.map
              (fun goal ->
@@ -386,7 +387,6 @@ let prooftree_from_script script =
          action } :: prooftree ,
        begin match action with
        | Tactic (new_goals, _) ->
-          assert (List.for_all (fun x -> List.mem x active_goals) solved_goals);
           List.append
             (List.subtract Evar.equal active_goals solved_goals)
             new_goals
@@ -427,15 +427,18 @@ let add_focus prooftree =
            active_goals
        in
        match action with
-       | Focus _ ->
+       | Focus prooftree ->
           add_focus_aux
-            ( (solved_goals, [ solved_goals, action ]) :: after )
+            ( ( solved_goals ,
+                [ solved_goals, Focus (add_focus_aux [] prooftree) ]
+              ) :: after )
             before
        | Tactic (new_goals, _) as tac ->
           let independent, dependent =
             List.partition
               (fun (goals, _) ->
-                List.is_empty (List.intersect Evar.equal goals new_goals))
+                List.for_all (fun g -> not (List.mem_f Evar.equal g new_goals))
+                             goals)
               after
           in
           let dependent_script =
