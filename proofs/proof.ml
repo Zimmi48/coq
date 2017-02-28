@@ -373,18 +373,19 @@ let prooftree_from_script script =
              List.map (fun goal -> { goal ; solved = true }) solved_goals ;
            action } ] ,
        begin match action with
-       | Tactic (new_goals, _) -> new_goals
+       | Tactic (new_goals, _) -> print_int (List.length new_goals); new_goals
        | Focus _ -> []
        end
     | ( solved_goals, action ) :: action_list ->
        let prooftree, active_goals = prooftree_and_active_goals action_list in
-       (* assert (List.for_all (fun x -> List.mem x active_goals) solved_goals); *)
+       assert (List.for_all (fun x -> List.mem x active_goals) solved_goals);
        { active_goals =
            List.map
              (fun goal ->
                { goal ; solved = List.mem_f Evar.equal goal solved_goals })
              active_goals ;
-         action } :: prooftree ,
+         action
+       } :: prooftree ,
        begin match action with
        | Tactic (new_goals, _) ->
           List.append
@@ -461,7 +462,7 @@ let add_focus prooftree =
             | _ ->
                dependent_script
           in
-          add_focus_aux ( (dependent_goals, dependent_script) :: after) before
+          add_focus_aux ( (dependent_goals, dependent_script) :: independent) before
   in
   add_focus_aux [] prooftree
 
