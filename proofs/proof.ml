@@ -365,35 +365,42 @@ let compact p =
 
 (*** Function manipulation proof extra informations ***)
 
+(* This function takes a nonempty list of ( solved goals, action )
+   and make a prooftree out of it, i.e. it adds at each
+   step the information on what are the active goals. *)
 let prooftree_from_script script =
   let rec prooftree_and_active_goals = function
-    | [] -> [] , []
-    | [ solved_goals, action ] ->
-       [ { active_goals =
-             List.map (fun goal -> { goal ; solved = true }) solved_goals ;
-           action } ] ,
+    | [ [ goal ] , action ] ->
+       (* This is the beginning of the script: it should have only one
+          solved goal which is also the only active goal *)
+       [ { action; active_goals = [ { goal ; solved = true } ] } ] ,
        begin match action with
-       | Tactic (new_goals, _) -> print_int (List.length new_goals); new_goals
+       | Tactic (new_goals, _) -> new_goals
        | Focus _ -> []
        end
     | ( solved_goals, action ) :: action_list ->
+       let is_solved goal = List.mem_f Evar.equal goal solved_goals in
        let prooftree, active_goals = prooftree_and_active_goals action_list in
        assert (List.for_all (fun x -> List.mem x active_goals) solved_goals);
-       { active_goals =
-           List.map
-             (fun goal ->
-               { goal ; solved = List.mem_f Evar.equal goal solved_goals })
-             active_goals ;
-         action
+       { action; active_goals =
+                   List.map (fun goal -> { goal ; solved = is_solved goal })
+                            active_goals ;
        } :: prooftree ,
        begin match action with
        | Tactic (new_goals, _) ->
-          List.append
-            (List.subtract Evar.equal active_goals solved_goals)
-            new_goals
+          (* When a tactic is applied to multiple goals, the new sub-goals
+             are added at the position of the first of the solved goals.
+             Ref: Cyprien Mangin
+          *)
+          let untouched_goals, solved_goals_and_beyond =
+            List.split_when is_solved active_goals
+          in
+          untouched_goals @ new_goals @
+            List.subtract Evar.equal solved_goals_and_beyond solved_goals
        | Focus _ ->
           List.subtract Evar.equal active_goals solved_goals
        end
+    | _ -> assert false
   in
   prooftree_and_active_goals script |> fst
 
