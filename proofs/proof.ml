@@ -407,17 +407,17 @@ let prooftree_from_script script =
 let add_focus prooftree =
   (* add_focus_aux after before
      Preconditions:
-     - after contains a list of ( a list of goals to
+     - "after" contains a list of ( a list of goals to
      be solved together , a list of actions to solve them )
      Each action is paired with the exact list of goals it solves,
      instead of being paired with the larger list of active goals,
      which will allow moving actions around.
-     update_active_goals is then used to compute the list of active
+     prooftree_from_script is then used to compute the list of active
      make a real prooftree.
-     - before contains a proof script
-     - the goals listed by after are exactly those remaining
-     when applying the script before.
-     - no goal appears twice in after
+     - "before" contains a proof script
+     - the goals listed by "after" are exactly those remaining
+     when applying the script "before".
+     - no goal appears twice in "after"
      Postconditions:
      - returns a proofscript with focusing added
    *)
@@ -451,25 +451,25 @@ let add_focus prooftree =
           in
           let dependent_script =
             dependent
-            |> List.map snd
-            |> List.concat
+            |> List.map_append snd
             |> List.cons (solved_goals, tac)
           in
           let dependent_goals =
             dependent
-            |> List.map fst
-            |> List.concat
+            |> List.map_append fst
             |> (fun goals -> List.subtract Evar.equal goals new_goals)
             |> List.append solved_goals
           in
           let dependent_script =
             match dependent_goals with
             | [ goal ] ->
-               [ dependent_goals, Focus (prooftree_from_script dependent_script) ]
+               [ dependent_goals,
+                 Focus (prooftree_from_script dependent_script) ]
             | _ ->
                dependent_script
           in
-          add_focus_aux ( (dependent_goals, dependent_script) :: independent) before
+          add_focus_aux ( (dependent_goals, dependent_script) :: independent)
+                        before
   in
   add_focus_aux [] prooftree
 
