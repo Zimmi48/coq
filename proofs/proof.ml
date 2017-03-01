@@ -453,6 +453,7 @@ let add_focus prooftree =
             dependent
             |> List.map_append snd
             |> List.cons (solved_goals, tac)
+            |> List.rev
           in
           let dependent_goals =
             dependent
@@ -521,8 +522,7 @@ let show_prooftree p =
              ++ show_prooftree_aux (Bullet (d + 1)) (str "") prooftree)
        end
   in
-  (* Show ``Proof.'' at the beginning even if the command was ``Proof with auto with arith.'' *)
-  v 2 (str "Proof." ++ spc () ++ show_prooftree_aux ProofBegins (str "") prooftree)
+  v 2 (str "" ++ spc () ++ show_prooftree_aux ProofBegins (str "") prooftree)
 
 (*** Tactics ***)
 
