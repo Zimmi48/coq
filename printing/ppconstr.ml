@@ -749,7 +749,7 @@ let tag_var = tag Tag.variable
       Constrextern.extern_glob_constr (Termops.vars_of_env env) r
     else c
 
-  let pr prec c = pr prec (transf (Global.env()) c)
+(*  let pr prec c = pr prec (transf (Global.env()) c) *)
 
   let pr_simpleconstr = function
     | { CAst.v = CAppExpl ((None,f,us),[]) } -> str "@" ++ pr_cref f us

@@ -57,8 +57,14 @@ let pr_new_syntax_in_context ?loc ft_beautify ocom =
   (* Side-effect: order matters *)
   let before = comment (CLexer.extract_comments (fst loc)) in
   let com = match ocom with
+    | Some (VernacExtend (("VernacSolve",_),_)) -> mt()
+    | Some (VernacBullet _) -> mt()
+    | Some ((VernacEndProof _) as com) ->
+       let p = Proof_global.give_me_the_proof () in
+       Proof.show_prooftree p ++ spc () ++ Ppvernac.pr_vernac com
     | Some com -> Ppvernac.pr_vernac com
-    | None -> mt() in
+    | None -> mt()
+  in
   let after = comment (CLexer.extract_comments (snd loc)) in
   if !Flags.beautify_file then
     (Pp.pp_with ft_beautify (hov 0 (before ++ com ++ after));
