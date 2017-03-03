@@ -381,7 +381,7 @@ let prooftree_from_script script =
     | ( solved_goals, action ) :: action_list ->
        let is_solved goal = List.mem_f Evar.equal goal solved_goals in
        let prooftree, active_goals = prooftree_and_active_goals action_list in
-       assert (List.for_all (fun x -> List.mem x active_goals) solved_goals);
+       (* assert (List.for_all (fun x -> List.mem x active_goals) solved_goals); *)
        { action; active_goals =
                    List.map (fun goal -> { goal ; solved = is_solved goal })
                             active_goals ;
