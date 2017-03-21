@@ -1168,7 +1168,7 @@ let check_not_primitive_record env ind =
 (* put t as t'=(x1:A1)..(xn:An)B with B an inductive definition of name name
    return name, B and t' *)
 
-let reduce_to_ind_gen allow_product env sigma t =
+let reduce_to_ind_gen allow_product env sigma ?term typ =
   let rec elimrec env t l =
     let t = hnf_constr env sigma t in
     match kind_of_term (fst (decompose_app t)) with
@@ -1185,12 +1185,26 @@ let reduce_to_ind_gen allow_product env sigma t =
 	  let t' = whd_all env sigma t in
 	  match kind_of_term (fst (decompose_app t')) with
 	    | Ind ind-> (check_privacy env ind, it_mkProd_or_LetIn t' l)
-	    | _ -> user_err  (str"Not an inductive product.")
+	    | _ ->
+               match term with
+               | Some term ->
+                  user_err (str "Term" ++ spc () ++ print_constr term ++ spc ()
+                            ++ str "has type" ++ spc () ++ print_constr typ
+                            ++ spc () ++ str "which is not an inductive type.")
+               | None ->
+                  user_err (str "Type" ++ spc () ++ print_constr typ
+                            ++ spc () ++ str "is not an inductive type.")
   in
-  elimrec env t []
+  elimrec env typ []
 
-let reduce_to_quantified_ind x = reduce_to_ind_gen true x
-let reduce_to_atomic_ind x = reduce_to_ind_gen false x
+let reduce_to_quantified_ind env sigma typ =
+  reduce_to_ind_gen true env sigma typ
+
+let reduce_to_quantified_ind_with_term env sigma term typ =
+  reduce_to_ind_gen true env sigma ~term typ
+
+let reduce_to_atomic_ind env sigma typ =
+  reduce_to_ind_gen false env sigma typ
 
 let find_hnf_rectype env sigma t =
   let ind,t = reduce_to_atomic_ind env sigma t in
