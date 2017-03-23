@@ -1436,8 +1436,7 @@ let general_case_analysis_in_context with_evars clear_flag (c,lbindc) =
   let sigma = Proofview.Goal.sigma gl in
   let env = Proofview.Goal.env gl in
   let concl = Proofview.Goal.concl gl in
-  let t = Retyping.get_type_of env (Sigma.to_evar_map sigma) c in
-  let (mind,_) = reduce_to_quantified_ind env (Sigma.to_evar_map sigma) t in
+  let (mind,_) = reduce_to_quantified_ind_with_term env (Sigma.to_evar_map sigma) c in
   let sort = Tacticals.New.elimination_sort_of_goal gl in
   let Sigma (elim, sigma, p) =
     if occur_term c concl then
@@ -1476,7 +1475,7 @@ let find_ind_eliminator ind s gl =
     evd, c
 
 let find_eliminator c gl =
-  let ((ind,u),t) = Tacmach.New.pf_reduce_to_quantified_ind gl (Tacmach.New.pf_unsafe_type_of gl c) in
+  let ((ind,u),t) = Tacmach.New.pf_reduce_to_quantified_ind_with_term gl c in
   if is_nonrec ind then raise IsNonrec;
   let evd, c = find_ind_eliminator ind (Tacticals.New.elimination_sort_of_goal gl) gl in
     evd, {elimindex = None; elimbody = (c,NoBindings);
@@ -1621,8 +1620,7 @@ let descend_in_conjunctions avoid tac (err, info) c =
   let env = Proofview.Goal.env gl in
   let sigma = Tacmach.New.project gl in
   try
-    let t = Retyping.get_type_of env sigma c in
-    let ((ind,u),t) = reduce_to_quantified_ind env sigma t in
+    let ((ind,u),t) = reduce_to_quantified_ind_with_term env sigma c in
     let sign,ccl = decompose_prod_assum t in
     match match_with_tuple ccl with
     | Some (_,_,isrec) ->
@@ -2287,8 +2285,7 @@ let my_find_eq_data_decompose gl t =
 let intro_decomp_eq loc l thin tac id =
   Proofview.Goal.nf_enter { enter = begin fun gl ->
   let c = mkVar id in
-  let t = Tacmach.New.pf_unsafe_type_of gl c in
-  let _,t = Tacmach.New.pf_reduce_to_quantified_ind gl t in
+  let _,t = Tacmach.New.pf_reduce_to_quantified_ind_with_term gl c in
   match my_find_eq_data_decompose gl t with
   | Some (eq,u,eq_args) ->
     !intro_decomp_eq_function
@@ -2301,8 +2298,7 @@ let intro_decomp_eq loc l thin tac id =
 let intro_or_and_pattern loc with_evars bracketed ll thin tac id =
   Proofview.Goal.enter { enter = begin fun gl ->
   let c = mkVar id in
-  let t = Tacmach.New.pf_unsafe_type_of gl c in
-  let (ind,t) = Tacmach.New.pf_reduce_to_quantified_ind gl t in
+  let (ind,t) = Tacmach.New.pf_reduce_to_quantified_ind_with_term gl c in
   let branchsigns = compute_constructor_signatures false ind in
   let nv_with_let = Array.map List.length branchsigns in
   let ll = fix_empty_or_and_pattern (Array.length branchsigns) ll in

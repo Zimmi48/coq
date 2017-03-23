@@ -83,7 +83,7 @@ val reduce_to_atomic_ind : env ->  evar_map -> types -> pinductive * types
 val reduce_to_quantified_ind : env ->  evar_map -> types -> pinductive * types
 
 val reduce_to_quantified_ind_with_term :
-   env ->  evar_map -> constr -> types -> pinductive * types
+  env ->  evar_map -> constr -> pinductive * types
 
 (** [reduce_to_quantified_ref env sigma ref t] try to put [t] in the form
    [t'=(x1:A1)..(xn:An)(ref args)] and fails with user error if not possible *)

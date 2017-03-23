@@ -131,6 +131,7 @@ module New : sig
 
   val pf_nf_concl : ([ `LZ ], 'r) Proofview.Goal.t -> types
   val pf_reduce_to_quantified_ind : ('a, 'r) Proofview.Goal.t -> types -> pinductive * types
+  val pf_reduce_to_quantified_ind_with_term : ('a, 'r) Proofview.Goal.t -> constr -> pinductive * types
 
   val pf_hnf_constr : ('a, 'r) Proofview.Goal.t -> constr -> types
   val pf_hnf_type_of : ('a, 'r) Proofview.Goal.t -> constr -> types

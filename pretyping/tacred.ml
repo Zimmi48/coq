@@ -1200,7 +1200,8 @@ let reduce_to_ind_gen allow_product env sigma ?term typ =
 let reduce_to_quantified_ind env sigma typ =
   reduce_to_ind_gen true env sigma typ
 
-let reduce_to_quantified_ind_with_term env sigma term typ =
+let reduce_to_quantified_ind_with_term env sigma term =
+  let typ = Retyping.get_type_of env sigma term in
   reduce_to_ind_gen true env sigma ~term typ
 
 let reduce_to_atomic_ind env sigma typ =
