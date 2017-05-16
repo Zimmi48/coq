@@ -874,19 +874,25 @@ module Search = struct
      (fun _ -> Proofview.Goal.enter (fun gl -> intro_tac info kont gl))
 
   let rec search_tac hints limit depth =
-    let kont info =
+    let kont depth info =
       Proofview.numgoals >>= fun i ->
       if !typeclasses_debug > 1 then
         Feedback.msg_debug
           (str"calling eauto recursively at depth " ++ int (succ depth)
            ++ str" on " ++ int i ++ str" subgoals");
-      search_tac hints limit (succ depth) info
+      search_tac hints limit depth info
     in
     fun info ->
     if Int.equal depth (succ limit) then Proofview.tclZERO ReachedLimitEx
     else
-      Proofview.tclOR (hints_tac hints info kont)
-                      (fun e -> Proofview.tclOR (intro info kont)
+      Proofview.tclOR (hints_tac hints info (kont (succ depth)))
+                      (fun e ->
+                        let depth =
+                          match info.mode with
+                          | EautoCompat -> depth
+                          | _ -> succ depth
+                        in
+                        Proofview.tclOR (intro info (kont (depth)))
                       (fun e' -> let (e, info) = merge_exceptions e e' in
                               Proofview.tclZERO ~info e))
 
