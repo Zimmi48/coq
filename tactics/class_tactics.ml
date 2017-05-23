@@ -596,7 +596,14 @@ let make_hints ~mode g st sign =
         in
         if consider then
           let hint =
-            pf_apply make_resolve_hyp g ~mode st (true,false,false) empty_hint_info hyp
+            (* FIXME: add a comment here *)
+            let transparency =
+              match mode with
+              | EautoCompat -> true
+              | _ -> false
+            in
+            pf_apply make_resolve_hyp g ~mode st (true,transparency,false)
+                     empty_hint_info hyp
           in hint @ hints
         else hints)
       ([]) sign
