@@ -805,6 +805,13 @@ let make_exact_entry env sigma info poly ?(name=PathAny) (c, cty, ctx) =
 	   db = None; secvars;
 	   code = with_uid (Give_exact (c, cty, ctx)); })
 
+let make_exact_entry_compat env sigma info poly ?(name=PathAny) (c, cty, ctx) =
+  let secvars = secvars_of_constr env sigma c in
+  let cty = strip_outer_cast sigma cty in
+  let pri = match info.hint_priority with None -> 0 | Some p -> p in
+  (None, { pri; poly; pat = None; name; db = None; secvars;
+           code = with_uid (Give_exact (c, cty, ctx)); })
+
 let make_apply_entry env sigma (eapply,hnf,verbose) info poly ?(name=PathAny) (c, cty, ctx) =
   let cty = if hnf then hnf_constr env sigma cty else cty in
     match EConstr.kind sigma cty with

@@ -195,6 +195,9 @@ val prepare_hint : bool (* Check no remaining evars *) ->
 val make_exact_entry : env -> evar_map -> hint_info -> polymorphic -> ?name:hints_path_atom ->
   (constr * types * Univ.ContextSet.t) -> hint_entry
 
+val make_exact_entry_compat : env -> evar_map -> hint_info -> polymorphic -> ?name:hints_path_atom ->
+  (constr * types * Univ.ContextSet.t) -> hint_entry
+
 (** [make_apply_entry (eapply,hnf,verbose) info (c,cty,ctx))].
    [eapply] is true if this hint will be used only with EApply;
    [hnf] should be true if we should expand the head of cty before searching for

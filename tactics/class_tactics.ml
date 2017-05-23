@@ -579,7 +579,10 @@ let make_resolve_hyp env sigma ~mode st flags pri decl =
         (hints @ List.map_filter
          (fun f -> try Some (f (c, cty, Univ.ContextSet.empty))
            with Failure _ | UserError _ -> None)
-         [make_exact_entry ~name env sigma pri false;
+         [begin match mode with
+          | EautoCompat -> make_exact_entry_compat ~name env sigma pri false
+          | _ -> make_exact_entry ~name env sigma pri false
+          end;
           make_apply_entry ~name env sigma flags pri false])
     else []
 
