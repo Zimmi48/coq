@@ -27,5 +27,5 @@ Hint Resolve max_correct_l max_correct_r : arith.
 Theorem foo : ∀ p p' p'' : nat, p'' < S (max p (max p' p'')).
 Proof.
   intros.
-  Timeout 3 eauto with arith.
+  Timeout 3 eauto 2 with arith.
 Qed.

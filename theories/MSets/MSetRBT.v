@@ -839,7 +839,6 @@ Proof.
    assert (L : lt_tree rx (append lr rl)).
     { intros w. autorew. destruct 1; [transitivity x|]; eauto. }
    revert IH G L; case append_bb_match; intros; ok.
-    apply lbalS_ok; ok.
 Qed.
 
 (** ** Deletion *)
