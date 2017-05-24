@@ -607,17 +607,11 @@ let make_hints g st only_classes sign =
   let hintlist =
     List.fold_left
       (fun hints hyp ->
-        let consider =
-          try let t = hyp |> NamedDecl.get_id |> Global.lookup_named |> NamedDecl.get_type in
-              (* Section variable, reindex only if the type changed *)
-              not (EConstr.eq_constr (project g) (EConstr.of_constr t) (NamedDecl.get_type hyp))
-          with Not_found -> true
-        in
-        if consider then
+        (* TODO: reindent *)
           let hint =
             pf_apply make_resolve_hyp g st (true,false,false) only_classes empty_hint_info hyp
           in hint @ hints
-        else hints)
+      )
       ([]) sign
   in Hint_db.add_list (pf_env g) (project g) hintlist (Hint_db.empty st true)
 
