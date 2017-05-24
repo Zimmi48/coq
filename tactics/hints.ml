@@ -920,7 +920,7 @@ let make_resolve_hyp env sigma decl =
 let make_unfold eref =
   let g = global_of_evaluable_reference eref in
   (Some g,
-   { pri = 4;
+   { pri = 1;
      poly = false;
      pat = None;
      name = PathHints [g];

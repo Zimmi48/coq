@@ -162,10 +162,6 @@ and e_my_find_search sigma db_list local_db secvars hdc concl =
   in
   let tac_of_hint =
     fun (st, {pri = b; pat = p; code = t; poly = poly}) ->
-      let b = match Hints.repr_hint t with
-      | Unfold_nth _ -> 1
-      | _ -> b
-      in
       (b,
         let tac = function
         | Res_pf (term,cl) -> unify_resolve poly st (term,cl)
