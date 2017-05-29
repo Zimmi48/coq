@@ -133,6 +133,9 @@ matrix:
           - avsm
           packages: *coqide-packages
 
+before_install:
+- if [ ! "${TRAVIS_PULL_REQUEST}" == "false" ]; then git fetch origin +${TRAVIS_BRANCH} && git merge FETCH_HEAD --no-edit; fi
+
 install:
 - opam init -j ${NJOBS} --compiler=${COMPILER} -n -y
 - eval $(opam config env)
