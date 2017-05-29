@@ -621,15 +621,6 @@ Proof.
 Qed.
 Hint Resolve absurd_eq_true.
 
-(* A specific instance of eq_trans that preserves compatibility with
-   old hint bool_2 *)
-
-Lemma trans_eq_bool : forall x y z:bool, x = y -> y = z -> x = z.
-Proof.
-  apply eq_trans.
-Qed.
-Hint Resolve trans_eq_bool.
-
 (*****************************************)
 (** * Reflection of [bool] into [Prop] *)
 (*****************************************)

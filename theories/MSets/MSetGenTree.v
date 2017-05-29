@@ -810,7 +810,7 @@ Proof.
  induction s as [|i l IHl x r IHr]; simpl; auto.
  - split; intros; inv; auto.
  - rewrite <- !andb_lazy_alt, !andb_true_iff, IHl, IHr. clear IHl IHr.
-   intuition_in. eauto.
+   intuition_in. rewrite Hf; eassumption.
 Qed.
 
 Lemma exists_spec s f : Proper (X.eq==>eq) f ->
@@ -826,7 +826,7 @@ Proof.
    * exists x; auto.
    * exists y; auto.
    * exists y; auto.
-   * inv; [left;left|left;right|right]; try (exists y); eauto.
+   * inv; [left;left|left;right|right]; try (exists y); try rewrite Hf; eauto.
 Qed.
 
 (** ** Fold *)
