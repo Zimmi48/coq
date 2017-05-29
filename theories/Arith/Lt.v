@@ -126,8 +126,6 @@ Notation lt_trans := Nat.lt_trans (compat "8.4").
 Notation lt_le_trans := Nat.lt_le_trans (compat "8.4").
 Notation le_lt_trans := Nat.le_lt_trans (compat "8.4").
 
-Hint Resolve lt_trans lt_le_trans le_lt_trans: arith.
-
 (** * Large = strict or equal *)
 
 Notation le_lt_or_eq_iff := Nat.lt_eq_cases (compat "8.4").

@@ -1562,7 +1562,7 @@ Proof.
    replace (redcarac r) with 0 in * by now destree r.
    now apply Nat.min_glb.
  - apply -> Nat.succ_le_mono. rewrite Nat.add_0_r.
-   apply Nat.min_glb; eauto with arith.
+   apply Nat.min_glb; etransitivity; typeclasses eauto 1 with arith.
 Qed.
 
 Lemma maxdepth_upperbound s : Rbt s ->
@@ -1814,7 +1814,7 @@ Proof.
  unfold treeify_cont.
  specialize (Hf acc).
  destruct (f acc) as (l, acc1). simpl in *.
- destruct Hf as (Hf1, Hf2). { subst. eauto with arith. }
+ destruct Hf as (Hf1, Hf2). { subst. etransitivity; typeclasses eauto 1 with arith. }
  destruct acc1 as [|x acc2]; simpl in *.
  - exfalso. revert Hacc. apply Nat.lt_nge. rewrite H, <- Hf2.
    auto with arith.

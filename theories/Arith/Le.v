@@ -30,7 +30,6 @@ Notation le_refl := Nat.le_refl (compat "8.4").
 Notation le_trans := Nat.le_trans (compat "8.4").
 Notation le_antisym := Nat.le_antisymm (compat "8.4").
 
-Hint Resolve le_trans: arith.
 Hint Immediate le_antisym: arith.
 
 (** * Properties of [le] w.r.t 0 *)

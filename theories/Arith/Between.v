@@ -169,7 +169,7 @@ Section Between.
   Proof.
     induction 1.
     - auto with arith.
-    - eapply le_trans; eauto with arith.
+    - do 2 etransitivity; typeclasses eauto 1 with arith.
   Qed.
 
   Definition eventually (n:nat) :=  exists2 k : nat, k <= n & Q k.
