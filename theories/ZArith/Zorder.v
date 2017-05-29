@@ -196,8 +196,6 @@ Proof.
   Z.swap_greater. Z.order.
 Qed.
 
-Hint Resolve Z.le_trans: zarith.
-
 (** * Compatibility of order and operations on Z *)
 
 (** ** Successor *)
