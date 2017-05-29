@@ -67,7 +67,8 @@ Hint Resolve Qle_ceiling : qarith.
 
 Lemma Qle_floor_ceiling : forall x, Qfloor x <= Qceiling x.
 Proof.
-eauto with qarith.
+  intros.
+  eapply Qle_trans; typeclasses eauto 1 with qarith.
 Qed.
 
 Lemma Qlt_floor : forall x, x < (Qfloor x+1)%Z.

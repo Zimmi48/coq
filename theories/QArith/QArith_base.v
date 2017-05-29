@@ -116,12 +116,12 @@ now rewrite Z.mul_shuffle0, XY, Z.mul_shuffle0, YZ, Z.mul_shuffle0.
 Qed.
 
 Hint Immediate Qeq_sym : qarith.
-Hint Resolve Qeq_refl Qeq_trans : qarith.
+Hint Resolve Qeq_refl : qarith.
 
 (** In a word, [Qeq] is a setoid equality. *)
 
 Instance Q_Setoid : Equivalence Qeq.
-Proof. split; red; eauto with qarith. Qed.
+Proof. split; red; eauto using Qeq_trans with qarith. Qed.
 
 (** Furthermore, this equality is decidable: *)
 
@@ -557,8 +557,6 @@ Proof.
     now apply Z.mul_le_mono_pos_r.
   Close Scope Z_scope.
 Qed.
-
-Hint Resolve Qle_trans : qarith.
 
 Lemma Qlt_irrefl x : ~x<x.
 Proof.
