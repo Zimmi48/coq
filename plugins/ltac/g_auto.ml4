@@ -114,6 +114,11 @@ TACTIC EXTEND eauto
         Eauto.gen_eauto (true, Eauto.make_depth depth) (eval_uconstrs ist lems) db ]
 END
 
+TACTIC EXTEND bfs_eauto
+| [ "bfs" "eauto" int_or_var_opt(depth) auto_using(lems) hintbases(db) ] ->
+    [ Class_tactics.eauto ~strategy:Class_tactics.Bfs ~depth (eval_uconstrs ist lems) db ]
+END
+
 TACTIC EXTEND new_eauto
 | [ "new" "auto" int_or_var_opt(n) auto_using(lems)
     hintbases(db) ] ->
