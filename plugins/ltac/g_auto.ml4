@@ -107,8 +107,11 @@ TACTIC EXTEND prolog
 END
 
 TACTIC EXTEND eauto
-| [ "eauto" int_or_var_opt(n) auto_using(lems) hintbases(db) ] ->
-    [ Eauto.gen_eauto (true, Eauto.make_depth n) (eval_uconstrs ist lems) db ]
+| [ "eauto" int_or_var_opt(depth) auto_using(lems) hintbases(db) ] ->
+    [ if Flags.version_strictly_greater Flags.V8_6 then
+        Class_tactics.eauto ~depth (eval_uconstrs ist lems) db
+      else
+        Eauto.gen_eauto (true, Eauto.make_depth depth) (eval_uconstrs ist lems) db ]
 END
 
 TACTIC EXTEND new_eauto
