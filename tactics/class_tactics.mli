@@ -29,6 +29,11 @@ val typeclasses_eauto : ?mode:mode -> ?st:transparent_state ->
                         ?strategy:search_strategy -> depth:(Int.t option) ->
                         Hints.hint_db_name list -> unit Proofview.tactic
 
+val eauto : ?strategy:search_strategy -> ?evars:bool -> depth:(Int.t option) ->
+            Tactypes.delayed_open_constr list ->
+            Hints.hint_db_name list option ->
+            unit Proofview.tactic
+
 val head_of_constr : Id.t -> constr -> unit Proofview.tactic
 
 val not_evar : constr -> unit Proofview.tactic
