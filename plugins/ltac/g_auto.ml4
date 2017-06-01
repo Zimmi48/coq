@@ -114,7 +114,7 @@ let make_depth n = snd (Eauto.make_dimension n None)
 TACTIC EXTEND eauto
 | [ "eauto" int_or_var_opt(n) int_or_var_opt(p) auto_using(lems)
     hintbases(db) ] ->
-    [ Eauto.gen_eauto (Eauto.make_dimension n p) (eval_uconstrs ist lems) db ]
+    [ Class_tactics.eauto ~depth:n (eval_uconstrs ist lems) db ]
 END
 
 TACTIC EXTEND bfs_eauto

@@ -616,7 +616,7 @@ Section Z_2nZ.
   intros xh xl; simpl.
   rewrite Z.add_comm; rewrite Z_mod_plus; auto with zarith.
   rewrite Zmod_small; auto with zarith.
-  unfold wB, base; eauto with ZnZ zarith.
+  unfold wB, base; bfs eauto with ZnZ zarith.
   unfold wB, base; eauto with ZnZ zarith.
  Qed.
 
@@ -847,7 +847,7 @@ refine
   assert (E : ZnZ.to_Z y = [|WW x y|] mod wB).
   { simpl; symmetry.
     rewrite Z.add_comm, Z.mod_add; auto with zarith nocore.
-    apply Z.mod_small; eauto with ZnZ zarith. }
+    apply Z.mod_small; bfs eauto with ZnZ zarith. }
   rewrite E.
   unfold wB, base. symmetry. apply Z.mod_pow2_bits_low; auto.
  Qed.
