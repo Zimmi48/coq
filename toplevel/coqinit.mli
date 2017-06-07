@@ -23,3 +23,7 @@ val push_ml_include : string -> unit
 val init_load_path : load_init:bool -> unit
 
 val init_ocaml_path : unit -> unit
+
+(** [get_version] returns the version and branch strings *)
+val get_version : unit -> string * string
+
