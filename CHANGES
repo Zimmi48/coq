@@ -9,28 +9,7 @@ Tactics
 - Tactic "specialize with ..." now accepts any partial bindings.
   Missing bindings are either solved by unification or left quantified
   in the hypothesis.
-- New representation of terms that statically ensure stability by
-  evar-expansion. This has several consequences.
-  * In terms of performance, this adds a cost to every term destructuration,
-    but at the same time most eager evar normalizations were removed, which
-    couterbalances this drawback and even sometimes outperforms the old
-    implementation. For instance, many operations that would require O(n)
-    normalization of the term are now O(1) in tactics. YMMV.
-  * This triggers small changes in unification, which was not evar-insensitive.
-    Most notably, the new implementation recognizes Miller patterns that were
-    missed before because of a missing normalization step. Hopefully this should
-    be fairly uncommon.
-- Tactic "auto with real" can now discharge comparisons of literals.
-- The types of variables in patterns of "match" are now
-  beta-iota-reduced after type-checking. This has an impact on the
-  type of the variables that the tactic "refine" introduces in the
-  context, producing types a priori closer to the expectations.
-- In "Tactic Notation" or "TACTIC EXTEND", entry "constr_with_bindings"
-  now uses type classes and rejects terms with unresolved holes, like
-  entry "constr" does. To get the former behavior use
-  "open_constr_with_bindings" (possible source of incompatibility.
-- New e-variants eassert, eenough, epose proof, eset, eremember, epose
-  which behave like the corresponding variants with no "e" but turn
+- New representation urn
   unresolved implicit arguments into existential variables, on the
   shelf, rather than failing.
 
