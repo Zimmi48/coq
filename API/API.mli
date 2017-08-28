@@ -4444,6 +4444,29 @@ sig
   val unshelve : proof -> proof
   val maximal_unfocus : 'a focus_kind -> proof -> proof
   val pr_proof : proof -> Pp.t
+  type 'a pre_goals = {
+      fg_goals : 'a list;
+      (** List of the focussed goals *)
+      bg_goals : ('a list * 'a list) list;
+      (** Zipper representing the unfocussed background goals *)
+      shelved_goals : 'a list;
+      (** List of the goals on the shelf. *)
+      given_up_goals : 'a list;
+      (** List of the goals that have been given up *)
+    }
+  type prooftree = action_on_goals list
+  and action_on_goals = { active_goals : goal_info list; action: action }
+  and goal_info = { goal : Goal.goal; solved : bool }
+  and action = Tactic of Goal.goal list * tactic_info | Focus of prooftree
+  (* The Unfocus command is not supported *)
+  and tactic_info = {
+      tactic : Pp.std_ppcmds;
+      with_end_tac : bool
+    }
+
+  val update_prooftree : (prooftree -> prooftree) -> proof -> proof
+
+  val map_structured_proof : proof -> (Evd.evar_map -> Evar.t -> 'a) -> ('a pre_goals)
   module V82 :
   sig
     val grab_evars : proof -> proof
