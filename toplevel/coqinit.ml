@@ -132,3 +132,4 @@ let get_version () =
     (version,branch)
   with e when CErrors.noncritical e ->
     (Coq_config.version,Coq_config.date)
+

@@ -9,13 +9,12 @@
 open Pp
 open CErrors
 open Libnames
-open Coqinit
 
 let () = at_exit flush_all
 
 let print_version ret =
   Envars.set_coqlib ~fail:(fun msg -> CErrors.user_err (Pp.str msg));
-  let (version,branch) = get_version () in
+  let (version,branch) = Envars.coq_version () in
   Printf.printf "The Coq Proof Assistant, version %s (%s)\n"
     version branch;
   Printf.printf "compiled on %s with OCaml %s\n" Coq_config.compile_date Coq_config.caml_version;
@@ -23,13 +22,13 @@ let print_version ret =
 
 let print_machine_readable_version ret =
   Envars.set_coqlib ~fail:(fun msg -> CErrors.user_err (Pp.str msg));
-  let (version,_branch) = get_version () in
+  let (version,_branch) = Envars.coq_version () in
   Printf.printf "%s %s\n"
     version Coq_config.caml_version;
   exit ret
 
 let print_header () =
-  let (ver,branch) = get_version () in
+  let (ver,branch) = Envars.coq_version () in
   Feedback.msg_notice (str "Welcome to Coq " ++ str ver ++ str " (" ++ str branch ++ str ")");
   flush_all ()
 
