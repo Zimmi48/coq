@@ -137,7 +137,7 @@ matrix:
 
     - os: osx
       env:
-      - TEST_TARGET="test-suite"
+      - TEST_TARGET="test-suite VERBOSE=1"
       - COMPILER="4.02.3"
       - CAMLP5_VER="6.17"      
       - NATIVE_COMP="no"
