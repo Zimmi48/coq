@@ -41,6 +41,7 @@
 *.v.before-timing
 *.v.after-timing
 *.v.html
+*_beautified.v
 *.stamp
 *.native
 revision

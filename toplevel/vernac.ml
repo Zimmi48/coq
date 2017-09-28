@@ -43,7 +43,7 @@ let vernac_echo ?loc in_chan = let open Loc in
 (* vernac parses the given stream, executes interpfun on the syntax tree it
  * parses, and is verbose on "primitives" commands if verbosely is true *)
 
-let beautify_suffix = ".beautified"
+let beautify_suffix = "_beautified"
 
 let set_formatter_translator ch =
   let out s b e = output_substring ch s b e in
@@ -173,7 +173,10 @@ let rec interp_vernac sid (loc,com) =
 and load_vernac verbosely sid file =
   let ft_beautify, close_beautify =
     if !Flags.beautify_file then
-      let chan_beautify = open_out (file^beautify_suffix) in
+      let file_beautify =
+        String.sub file 0 (String.length file - 2) ^ beautify_suffix ^ ".v"
+      in
+      let chan_beautify = open_out file_beautify in
       set_formatter_translator chan_beautify, fun () -> close_out chan_beautify;
     else
       !Topfmt.std_ft, fun () -> ()
