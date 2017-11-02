@@ -13,7 +13,7 @@ open Printf
 
 let coq_version = "8.8+alpha"
 let coq_macos_version = "8.7.90" (** "[...] should be a string comprised of
-three non-negative, period-separated integers [...]" *)
+                                     three non-negative, period-separated integers [...]" *)
 let vo_magic = 8791
 let state_magic = 58791
 let distributed_exec = ["coqtop";"coqc";"coqchk";"coqdoc";"coqmktop";"coqworkmgr";
@@ -1058,7 +1058,6 @@ let write_configml f =
   pr_s "caml_version" caml_version;
   pr_li "caml_version_nums" caml_version_nums;
   pr_s "date" short_date;
-  pr_s "compile_date" full_date;
   pr_s "arch" arch;
   pr_b "arch_is_win32" arch_is_win32;
   pr_s "exec_extension" exe;

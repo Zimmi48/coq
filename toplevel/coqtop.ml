@@ -13,23 +13,21 @@ open Libnames
 let () = at_exit flush_all
 
 let print_version ret =
+  let open Coqversion in
   Envars.set_coqlib ~fail:(fun msg -> CErrors.user_err (Pp.str msg));
-  let (version,branch) = Envars.coq_version () in
-  Printf.printf "The Coq Proof Assistant, version %s (%s)\n"
-    version branch;
-  Printf.printf "compiled on %s with OCaml %s\n" Coq_config.compile_date Coq_config.caml_version;
+  Printf.printf "The Coq Proof Assistant, version %s (%s)\n" version.describe version.branch;
+  Printf.printf "compiled on %s with OCaml %s\n" compile_date Coq_config.caml_version;
   exit ret
 
 let print_machine_readable_version ret =
+  let open Coqversion in
   Envars.set_coqlib ~fail:(fun msg -> CErrors.user_err (Pp.str msg));
-  let (version,_branch) = Envars.coq_version () in
-  Printf.printf "%s %s\n"
-    version Coq_config.caml_version;
+  Printf.printf "%s %s\n" version.describe Coq_config.caml_version;
   exit ret
 
 let print_header () =
-  let (ver,branch) = Envars.coq_version () in
-  Feedback.msg_notice (str "Welcome to Coq " ++ str ver ++ str " (" ++ str branch ++ str ")");
+  let open Coqversion in
+  Feedback.msg_notice (str "Welcome to Coq " ++ str version.describe ++ str " (" ++ str version.branch ++ str ")");
   flush_all ()
 
 let warning s = Flags.(with_option warn Feedback.msg_warning (strbrk s))

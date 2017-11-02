@@ -62,7 +62,7 @@ AFTER ?=
 
 # build the different subsystems:
 
-world: coq coqide documentation revision
+world: coq coqide documentation
 
 coq: coqlib coqbinaries tools
 
@@ -380,7 +380,7 @@ coqbinaries: $(COQMKTOP) $(COQTOPEXE) $(CHICKEN) $(CSDPCERT) $(FAKEIDE)
 coqbyte: $(COQTOPBYTE) $(CHICKENBYTE)
 
 ifeq ($(BEST),opt)
-$(COQTOPEXE): $(COQMKTOP) $(LINKCMX) $(LIBCOQRUN) $(TOPLOOPCMA:.cma=.cmxs) revision
+$(COQTOPEXE): $(COQMKTOP) $(LINKCMX) $(LIBCOQRUN) $(TOPLOOPCMA:.cma=.cmxs)
 	$(SHOW)'COQMKTOP -o $@'
 	$(HIDE)$(COQMKTOP) -boot -opt $(OPTFLAGS) $(LINKMETADATA) -o $@
 	$(STRIP) $@
@@ -390,7 +390,7 @@ $(COQTOPEXE): $(COQTOPBYTE)
 	cp $< $@
 endif
 
-$(COQTOPBYTE): $(COQMKTOP) $(LINKCMO) $(LIBCOQRUN) $(TOPLOOPCMA) revision
+$(COQTOPBYTE): $(COQMKTOP) $(LINKCMO) $(LIBCOQRUN) $(TOPLOOPCMA)
 	$(SHOW)'COQMKTOP -o $@'
 	$(HIDE)$(COQMKTOP) -boot -top $(BYTEFLAGS) -o $@
 
@@ -472,7 +472,7 @@ $(GALLINA): $(call bestobj, tools/gallina_lexer.cmo tools/gallina.cmo)
 	$(SHOW)'OCAMLBEST -o $@'
 	$(HIDE)$(call bestocaml,,)
 
-COQMAKEFILECMO:=lib/clib.cma tools/coq_makefile.cmo
+COQMAKEFILECMO:=lib/clib.cma version/coqversion.cmo tools/coq_makefile.cmo
 
 $(COQMAKEFILE): $(call bestobj,$(COQMAKEFILECMO))
 	$(SHOW)'OCAMLBEST -o $@'
@@ -486,7 +486,7 @@ $(COQWC): $(call bestobj, tools/coqwc.cmo)
 	$(SHOW)'OCAMLBEST -o $@'
 	$(HIDE)$(call bestocaml,,)
 
-COQDOCCMO:=lib/clib.cma $(addprefix tools/coqdoc/, \
+COQDOCCMO:=lib/clib.cma version/coqversion.cmo $(addprefix tools/coqdoc/, \
   cdglobals.cmo alpha.cmo index.cmo tokens.cmo output.cmo cpretty.cmo main.cmo )
 
 $(COQDOC): $(call bestobj, $(COQDOCCMO))
@@ -569,6 +569,12 @@ test-suite: world byte $(ALLSTDLIB).v
 kernel/kernel.cma: kernel/kernel.mllib
 	$(SHOW)'OCAMLC -a -o $@'
 	$(HIDE)$(OCAMLC) $(MLINCLUDES) $(BYTEFLAGS) $(VMBYTEFLAGS) -a -o $@ $(filter-out %.mllib, $^)
+
+# We need to explicitly list this dependency due to the mixed-handling
+# of modules.
+version/version.mllib.d: version/coqversion.ml.d
+version/coqversion.cmo: version/coqversion.cmi
+version/coqversion.cmx: config/coq_config.cmx version/coqversion.cmi
 
 # Specific rule for API/API.cmi
 # Make sure that API/API.mli cannot leak types from the Coq codebase.

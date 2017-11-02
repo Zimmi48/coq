@@ -190,3 +190,5 @@ test-suite/.nra.cache
 
 plugins/ssr/ssrparser.ml
 plugins/ssr/ssrvernac.ml
+
+version/coq_version.ml

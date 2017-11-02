@@ -38,9 +38,7 @@ let load_rcfile doc sid =
 	try
 	  let warn x = Feedback.msg_warning (str x) in
 	  let inferedrc = List.find CUnix.file_readable_p [
-	    Envars.xdg_config_home warn / rcdefaultname^"."^Coq_config.version;
 	    Envars.xdg_config_home warn / rcdefaultname;
-	    Envars.home ~warn / "."^rcdefaultname^"."^Coq_config.version;
 	    Envars.home ~warn / "."^rcdefaultname
 	  ] in
           Vernac.load_vernac ~verbosely:false ~interactive:false ~check:true doc sid inferedrc
@@ -122,14 +120,3 @@ let init_ocaml_path () =
   in
     Mltop.add_ml_dir (Envars.coqlib ());
     List.iter add_subdir Coq_config.all_src_dirs
-
-let get_version () =
-  try
-    let ch = open_in (Envars.coqlib () / "revision") in
-    let version = input_line ch in
-    let branch = input_line ch in
-    let () = close_in ch in
-    (version,branch)
-  with e when CErrors.noncritical e ->
-    (Coq_config.version,Coq_config.date)
-
