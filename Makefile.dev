@@ -28,9 +28,8 @@ dev/camlp4.dbg:
 ############
 
 # build a file with information about the last time the git tree changed.
-version/coqversion.ml: $(wildcard .git/index .git/HEAD) dev/gen_version.sh
-	$(SHOW)'GEN coqversion'
-	$(HIDE)$(shell dev/gen_version.sh > version/coqversion.ml)
+version/coqversion.ml:
+	$(SHOW)$(shell dev/gen_version.sh)
 
 ###################
 # Partial builds
