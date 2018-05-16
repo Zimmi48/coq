@@ -1,3 +1,9 @@
+---
+name: Bug report
+about: Report an unexpected behavior
+
+---
+
 <!-- Thank you for your contribution.
      Please complete the following information when reporting a bug. -->
 
