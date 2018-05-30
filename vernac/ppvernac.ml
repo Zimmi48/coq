@@ -179,10 +179,6 @@ open Pputils
     | [] -> mt()
     | _ as z -> str":" ++ spc() ++ prlist_with_sep sep str z
 
-  let pr_reference_or_constr pr_c = function
-    | HintsReference r -> pr_reference r
-    | HintsConstr c -> pr_c c
-
   let pr_hint_mode = function
     | ModeInput -> str"+"
     | ModeNoHeadEvar -> str"!"
@@ -198,11 +194,11 @@ open Pputils
       match h with
         | HintsResolve l ->
           keyword "Resolve " ++ prlist_with_sep sep
-            (fun (info, _, c) -> pr_reference_or_constr pr_c c ++ pr_hint_info pr_pat info)
+            (fun (info, _, c) -> pr_reference c ++ pr_hint_info pr_pat info)
             l
         | HintsImmediate l ->
           keyword "Immediate" ++ spc() ++
-            prlist_with_sep sep (fun c -> pr_reference_or_constr pr_c c) l
+            prlist_with_sep sep (fun c -> pr_reference c) l
         | HintsUnfold l ->
           keyword "Unfold" ++ spc () ++ prlist_with_sep sep pr_reference l
         | HintsTransparency (l, b) ->

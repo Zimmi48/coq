@@ -103,11 +103,6 @@ type comment =
   | CommentString of string
   | CommentInt of int
 
-type reference_or_constr = Hints.reference_or_constr =
-  | HintsReference of reference
-  | HintsConstr of constr_expr
-[@@ocaml.deprecated "Please use [Hints.hints_expr]"]
-
 type hint_mode = Hints.hint_mode =
   | ModeInput (* No evars *)
   | ModeNoHeadEvar (* No evar at the head *)
@@ -123,8 +118,8 @@ type hint_info_expr = Typeclasses.hint_info_expr
 [@@ocaml.deprecated "Please use [Typeclasses.hint_info_expr]"]
 
 type hints_expr = Hints.hints_expr =
-  | HintsResolve of (Typeclasses.hint_info_expr * bool * Hints.reference_or_constr) list
-  | HintsImmediate of Hints.reference_or_constr list
+  | HintsResolve of (Typeclasses.hint_info_expr * bool * reference) list
+  | HintsImmediate of reference list
   | HintsUnfold of reference list
   | HintsTransparency of reference list * bool
   | HintsMode of reference * Hints.hint_mode list

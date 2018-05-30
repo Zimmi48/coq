@@ -155,18 +155,14 @@ type full_hint = hint with_metadata
 type hint_entry = GlobRef.t option *
   raw_hint hint_ast with_uid with_metadata
 
-type reference_or_constr =
-  | HintsReference of reference
-  | HintsConstr of Constrexpr.constr_expr
-
 type hint_mode =
   | ModeInput (* No evars *)
   | ModeNoHeadEvar (* No evar at the head *)
   | ModeOutput (* Anything *)
 
 type hints_expr =
-  | HintsResolve of (Typeclasses.hint_info_expr * bool * reference_or_constr) list
-  | HintsImmediate of reference_or_constr list
+  | HintsResolve of (Typeclasses.hint_info_expr * bool * reference) list
+  | HintsImmediate of reference list
   | HintsUnfold of reference list
   | HintsTransparency of reference list * bool
   | HintsMode of reference * hint_mode list
@@ -1293,22 +1289,14 @@ let interp_hints poly =
   fun h ->
   let env = Global.env () in
   let sigma = Evd.from_env env in
-  let f poly c =
-    let evd,c = Constrintern.interp_open_constr env sigma c in
-    let env = Global.env () in
-    let sigma = Evd.from_env env in
-      prepare_hint true (poly,false) env sigma (evd,c) in
   let fref r =
     let gr = global_with_alias r in
     Dumpglob.add_glob ?loc:r.CAst.loc gr;
     gr in
   let fr r = evaluable_of_global_reference env (fref r) in
   let fi c =
-    match c with
-    | HintsReference c ->
-      let gr = global_with_alias c in
-	(PathHints [gr], poly, IsGlobRef gr)
-    | HintsConstr c -> (PathAny, poly, f poly c)
+    let gr = global_with_alias c in
+    (PathHints [gr], poly, IsGlobRef gr)
   in
   let fp = Constrintern.intern_constr_pattern env sigma in
   let fres (info, b, r) =
