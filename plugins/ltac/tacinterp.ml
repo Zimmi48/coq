@@ -514,7 +514,9 @@ let interp_glob_closure ist env sigma ?(kind=WithoutTypeConstraint) ?(pattern_mo
         ltac_bound = Id.Map.domain ist.lfun;
         ltac_extra = Genintern.Store.empty;
       } in
-      { closure ; term = intern_gen kind ~pattern_mode ~ltacvars env sigma term_expr }
+      (* We do not print compat warnings at this time because it will have
+         already been done at internalization time. *)
+      { closure ; term = intern_gen ~print_compat_warnings:false kind ~pattern_mode ~ltacvars env sigma term_expr }
 
 let interp_uconstr ist env sigma c = interp_glob_closure ist env sigma c
 

@@ -994,7 +994,7 @@ let glob_sort_of_level (level: glob_level) : glob_sort =
   | GType info -> GType [sort_info_of_level_info info]
 
 (* Is it a global reference or a syntactic definition? *)
-let intern_qualid ?(no_secvar=false) qid intern env ntnvars us args =
+let intern_qualid ~print_compat_warnings ?(no_secvar=false) qid intern env ntnvars us args =
   let loc = qid.loc in
   match intern_extended_global_of_qualid qid with
   | TrueGlobal (VarRef _) when no_secvar ->
@@ -1002,7 +1002,7 @@ let intern_qualid ?(no_secvar=false) qid intern env ntnvars us args =
       raise Not_found
   | TrueGlobal ref -> (DAst.make ?loc @@ GRef (ref, us)), true, args
   | SynDef sp ->
-      let (ids,c) = Syntax_def.search_syntactic_definition ?loc sp in
+      let (ids,c) = Syntax_def.search_syntactic_definition ~print_compat_warnings ?loc sp in
       let nids = List.length ids in
       if List.length args < nids then error_not_enough_arguments ?loc;
       let args1,args2 = List.chop nids args in
@@ -1036,12 +1036,12 @@ let intern_qualid ?(no_secvar=false) qid intern env ntnvars us args =
       in
       c, projapp, args2
 
-let intern_applied_reference intern env namedctx (_, ntnvars as lvar) us args =
+let intern_applied_reference ~print_compat_warnings intern env namedctx (_, ntnvars as lvar) us args =
 function
   | {loc; v=Qualid qid} ->
       let qid = make ?loc qid in
       let r,projapp,args2 =
-        try intern_qualid qid intern env ntnvars us args
+        try intern_qualid ~print_compat_warnings qid intern env ntnvars us args
         with Not_found -> error_global_not_found qid
       in
       let x, imp, scopes, l = find_appl_head_data r in
@@ -1051,7 +1051,7 @@ function
       with Not_found ->
       let qid = make ?loc @@ qualid_of_ident id in
       try
-        let r, projapp, args2 = intern_qualid ~no_secvar:true qid intern env ntnvars us args in
+        let r, projapp, args2 = intern_qualid ~print_compat_warnings ~no_secvar:true qid intern env ntnvars us args in
 	let x, imp, scopes, l = find_appl_head_data r in
 	  (x,imp,scopes,l), args2
       with Not_found ->
@@ -1062,7 +1062,7 @@ function
 
 let interp_reference vars r =
   let (r,_,_,_),_ =
-    intern_applied_reference (fun _ -> error_not_enough_arguments ?loc:None)
+    intern_applied_reference ~print_compat_warnings:true (fun _ -> error_not_enough_arguments ?loc:None)
       {ids = Id.Set.empty; unb = false ;
        tmp_scope = None; scopes = []; impls = empty_internalization_env} []
       (vars, Id.Map.empty) None [] r
@@ -1776,11 +1776,11 @@ let extract_explicit_arg imps args =
 (**********************************************************************)
 (* Main loop                                                          *)
 
-let internalize globalenv env pattern_mode (_, ntnvars as lvar) c =
+let internalize ?(print_compat_warnings=true) globalenv env pattern_mode (_, ntnvars as lvar) c =
   let rec intern env = CAst.with_loc_val (fun ?loc -> function
     | CRef (ref,us) ->
 	let (c,imp,subscopes,l),_ =
-	  intern_applied_reference intern env (Environ.named_context globalenv)
+          intern_applied_reference ~print_compat_warnings intern env (Environ.named_context globalenv)
 	    lvar us [] ref
 	in
 	  apply_impargs c env imp subscopes l loc
@@ -1887,7 +1887,7 @@ let internalize globalenv env pattern_mode (_, ntnvars as lvar) c =
     | CAppExpl ((isproj,ref,us), args) ->
         let (f,_,args_scopes,_),args =
 	  let args = List.map (fun a -> (a,None)) args in
-	  intern_applied_reference intern env (Environ.named_context globalenv) 
+          intern_applied_reference ~print_compat_warnings intern env (Environ.named_context globalenv)
 	    lvar us args ref 
 	in
 	  (* Rem: GApp(_,f,[]) stands for @f *)
@@ -1904,7 +1904,7 @@ let internalize globalenv env pattern_mode (_, ntnvars as lvar) c =
 	let (c,impargs,args_scopes,l),args =
           match f.CAst.v with
             | CRef (ref,us) -> 
-	       intern_applied_reference intern env
+               intern_applied_reference ~print_compat_warnings intern env
 		 (Environ.named_context globalenv) lvar us args ref
             | CNotation (ntn,([],[],[],[])) ->
                 let c = intern_notation intern env ntnvars loc ntn ([],[],[],[]) in
@@ -2228,11 +2228,11 @@ let empty_ltac_sign = {
   ltac_extra = Genintern.Store.empty;
 }
 
-let intern_gen kind env sigma
+let intern_gen ?print_compat_warnings kind env sigma
                ?(impls=empty_internalization_env) ?(pattern_mode=false) ?(ltacvars=empty_ltac_sign)
                c =
   let tmp_scope = scope_of_type_kind sigma kind in
-  internalize env {ids = extract_ids env; unb = false;
+  internalize ?print_compat_warnings env {ids = extract_ids env; unb = false;
 		         tmp_scope = tmp_scope; scopes = [];
 			 impls = impls}
     pattern_mode (ltacvars, Id.Map.empty) c

@@ -81,7 +81,7 @@ val empty_ltac_sign : ltac_sign
 val intern_constr : env -> evar_map -> constr_expr -> glob_constr
 val intern_type : env -> evar_map -> constr_expr -> glob_constr
 
-val intern_gen : typing_constraint -> env -> evar_map ->
+val intern_gen : ?print_compat_warnings:bool -> typing_constraint -> env -> evar_map ->
   ?impls:internalization_env -> ?pattern_mode:bool -> ?ltacvars:ltac_sign ->
   constr_expr -> glob_constr
 

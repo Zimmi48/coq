@@ -101,8 +101,8 @@ let verbose_compat ?loc kn def = function
      warn_compatibility_notation ?loc (kn, def, v)
   | _ -> ()
 
-let search_syntactic_definition ?loc kn =
+let search_syntactic_definition ?(print_compat_warnings=true) ?loc kn =
   let pat,v = KNmap.find kn !syntax_table in
   let def = out_pat pat in
-  verbose_compat ?loc kn def v;
+  if print_compat_warnings then verbose_compat ?loc kn def v;
   def
