@@ -8,7 +8,6 @@
 (*         *     (see LICENSE file for the text of the license)         *)
 (************************************************************************)
 
-open Constrintern
 open Patternops
 open Pp
 open CAst
@@ -504,6 +503,7 @@ let interp_glob_closure ist env sigma ?(kind=WithoutTypeConstraint) ?(pattern_mo
      (* If at toplevel (term_expr_opt<>None), the error can be due to
        an incorrect context at globalization time: we retype with the
        now known intros/lettac/inversion hypothesis names *)
+     let open Constrintern in
       let constr_context =
         Id.Set.union
           (Id.Map.domain closure.typed)
@@ -514,7 +514,13 @@ let interp_glob_closure ist env sigma ?(kind=WithoutTypeConstraint) ?(pattern_mo
         ltac_bound = Id.Map.domain ist.lfun;
         ltac_extra = Genintern.Store.empty;
       } in
-      { closure ; term = intern_gen kind ~pattern_mode ~ltacvars env sigma term_expr }
+      { closure
+      ; term =
+          CWarnings.without_warnings
+            (fun () ->
+              intern_gen kind ~pattern_mode ~ltacvars env sigma term_expr
+            )
+      }
 
 let interp_uconstr ist env sigma c = interp_glob_closure ist env sigma c
 

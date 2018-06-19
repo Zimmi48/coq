@@ -19,3 +19,6 @@ val set_flags : string -> unit
 (** Cleans up a user provided warnings status string, e.g. removing unknown
     warnings (in which case a warning is emitted) or subsumed warnings . *)
 val normalize_flags_string : string -> string
+
+(** Apply a function to an argument while temporarily silencing all warnings. *)
+val without_warnings : (unit -> 'a) -> 'a

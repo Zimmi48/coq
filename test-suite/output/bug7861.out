@@ -1,0 +1,2 @@
+File "stdin", line 3, characters 13-16:
+Warning: foo is O [compatibility-notation,deprecated]

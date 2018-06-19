@@ -176,3 +176,8 @@ let create ~name ~category ?(default=Enabled) pp =
                   str category ++ str "]"
               in
               Feedback.msg_warning ?loc msg
+
+let without_warnings f =
+  let w = get_flags () in
+  let () = set_flags "none" in
+  try f () with reraise -> set_flags w; raise reraise
