@@ -75,10 +75,13 @@ stdenv.mkDerivation rec {
 
   prefixKey = "-prefix ";
 
+  configureFlags = [ "-bin-annot" ];
+
   buildFlags = [ "world" "byte" ] ++ optional buildDoc "doc-html";
 
   installTargets =
-    [ "install" "install-byte" ] ++ optional buildDoc "install-doc-html";
+    [ "install" "install-byte" "install-merlin" ]
+    ++ optional buildDoc "install-doc-html";
 
   inherit doInstallCheck;
 
