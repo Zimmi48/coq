@@ -263,6 +263,8 @@ pkg:nix:
   dependencies: [] # We don't need to download build artifacts
   before_script: [] # We don't want to use the shared 'before_script'
   script:
+    # In sandboxed builds, scripts must be patched with patchShebangs.
+    - rm /bin /usr/bin/env
     # Use current worktree as tmpdir to allow exporting artifacts in case of failure
     - export TMPDIR=$PWD
     # Install Cachix as documented at https://github.com/cachix/cachix
