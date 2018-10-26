@@ -73,7 +73,17 @@ stdenv.mkDerivation rec {
     else
       with builtins; filterSource
         (path: _:
-           !elem (baseNameOf path) [".git" "result" "bin" "_build" "_build_ci"]) ./.;
+           !elem (baseNameOf path) [
+             ".git"
+             "result"
+             "bin"
+             "_build"
+             "_build_ci"
+             # export-ignore in .gitattributes
+             ".gitattributes"
+             ".gitignore"
+             ".mailmap"
+           ]) ./.;
 
   preConfigure = ''
     patchShebangs kernel/
