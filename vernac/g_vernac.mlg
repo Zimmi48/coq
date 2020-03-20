@@ -204,6 +204,8 @@ GRAMMAR EXTEND Gram
       (* Gallina inductive declarations *)
       | f = finite_token; indl = LIST1 inductive_definition SEP "with" ->
           { VernacInductive (f, indl) }
+      | r = record_token; recl = LIST1 record_definition SEP "with" ->
+          { VernacInductive (r, recl) }
       | "Fixpoint"; recs = LIST1 rec_definition SEP "with" ->
           { VernacFixpoint (NoDischarge, recs) }
       | IDENT "Let"; "Fixpoint"; recs = LIST1 rec_definition SEP "with" ->
@@ -341,9 +343,11 @@ GRAMMAR EXTEND Gram
     [ [ IDENT "Inductive" -> { Inductive_kw }
       | IDENT "CoInductive" -> { CoInductive }
       | IDENT "Variant" -> { Variant }
-      | IDENT "Record" -> { Record }
-      | IDENT "Structure" -> { Structure }
       | IDENT "Class" -> { Class true } ] ]
+  ;
+  record_token:
+    [ [ IDENT "Record" -> { Record }
+      | IDENT "Structure" -> { Structure } ] ]
   ;
   (* Simple definitions *)
   def_body:
@@ -408,6 +412,13 @@ GRAMMAR EXTEND Gram
           { RecordDecl (Some cstr,fs) }
       | "{";fs = record_fields; "}" -> { RecordDecl (None,fs) }
       |  -> { Constructors [] } ] ]
+  ;
+  record_definition:
+    [ [ oc = opt_coercion; id = ident_decl; indpar = binders;
+        c = OPT [ ":"; c = lconstr -> { c } ];
+        cstr = OPT [ cstr = identref -> { cstr } ]; "{"; fs = record_fields; "}";
+        ntn = decl_notations ->
+          { (((oc,id),(indpar,None),c,RecordDecl (cstr,fs)),ntn) } ] ]
   ;
 (*
   csort:
