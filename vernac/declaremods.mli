@@ -40,6 +40,11 @@ type module_params = (lident list * (Constrexpr.module_ast * inline)) list
 val declare_module :
   Id.t ->
   module_params ->
+  (Constrexpr.module_ast * inline) -> ModPath.t
+
+val define_module :
+  Id.t ->
+  module_params ->
   (Constrexpr.module_ast * inline) module_signature ->
   (Constrexpr.module_ast * inline) list -> ModPath.t
 

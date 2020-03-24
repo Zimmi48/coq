@@ -733,7 +733,7 @@ let end_module () =
 
   mp
 
-let declare_module id args res mexpr_o fs =
+let declare_module id args (mty,ann) fs =
   (* We simulate the beginning of an interactive module,
      then we adds the module parameters to the global env. *)
   let mp = Global.start_module id in
@@ -741,55 +741,34 @@ let declare_module id args res mexpr_o fs =
   let params = mk_params_entry arg_entries_r in
   let env = Global.env () in
   let env = Environ.push_context_set ~strict:true cst env in
-  let mty_entry_o, subs, inl_res, cst' = match res with
-    | Enforce (mty,ann) ->
-        let inl = inl2intopt ann in
-        let (mte, _, cst) = Modintern.interp_module_ast env Modintern.ModType mty in
-        let env = Environ.push_context_set ~strict:true cst env in
-        (* We check immediately that mte is well-formed *)
-        let _, _, _, cst' = Mod_typing.translate_mse env None inl mte in
-        let cst = Univ.ContextSet.union cst cst' in
-        Some mte, [], inl, cst
-    | Check mtys ->
-      let typs, cst = build_subtypes env mp arg_entries_r mtys in
-      None, typs, default_inline (), cst
+  let inl = inl2intopt ann in
+  let mte, cst' =
+    let (mte, _, cst) = Modintern.interp_module_ast env Modintern.ModType mty in
+    let env = Environ.push_context_set ~strict:true cst env in
+    (* We check immediately that mte is well-formed *)
+    let _, _, _, cst' = Mod_typing.translate_mse env None inl mte in
+    let cst = Univ.ContextSet.union cst cst' in
+    mte, cst
   in
   let env = Environ.push_context_set ~strict:true cst' env in
   let cst = Univ.ContextSet.union cst cst' in
-  let mexpr_entry_o, inl_expr, cst' = match mexpr_o with
-    | None -> None, default_inline (), Univ.ContextSet.empty
-    | Some (mexpr,ann) ->
-      let (mte, _, cst) = Modintern.interp_module_ast env Modintern.Module mexpr in
-      Some mte, inl2intopt ann, cst
-  in
-  let env = Environ.push_context_set ~strict:true cst' env in
+  let env = Environ.push_context_set ~strict:true Univ.ContextSet.empty env in
   let cst = Univ.ContextSet.union cst cst' in
-  let entry = match mexpr_entry_o, mty_entry_o with
-    | None, None -> assert false (* No body, no type ... *)
-    | None, Some typ -> MType (params, typ)
-    | Some body, otyp -> MExpr (params, body, otyp)
-  in
-  let sobjs, mp0 = match entry with
-    | MType (_,mte) | MExpr (_,_,Some mte) ->
-      get_functor_sobjs false env inl_res (params,mte), get_module_path mte
-    | MExpr (_,me,None) ->
-      get_functor_sobjs true env inl_expr (params,me), get_module_path me
+  let sobjs, mp0 =
+      get_functor_sobjs false env inl (params,mte), get_module_path mte
   in
   (* Undo the simulated interactive building of the module
      and declare the module as a whole *)
   Summary.unfreeze_summaries fs;
-  let inl = match inl_expr with
-  | None -> None
-  | _ -> inl_res
-  in
   let () = Global.push_context_set ~strict:true cst in
-  let mp_env,resolver = Global.add_module id entry inl in
+  let mp_env,resolver = Global.add_module id (MType (params, mte)) inl in
 
   (* Name consistency check : kernel vs. library *)
   assert (ModPath.equal mp (mp_of_kn (Lib.make_kn id)));
   assert (ModPath.equal mp mp_env);
 
-  check_subtypes mp subs;
+  (* XXXX: IIUC the following line can be removed too *)
+  check_subtypes mp [];
 
   let sobjs = subst_sobjs (map_mp mp0 mp resolver) sobjs in
   ignore (add_leaf id (ModuleObject sobjs));
@@ -944,16 +923,16 @@ let start_module export id args res =
 
 let end_module = RawModOps.end_module
 
-let declare_module id args mtys me_l =
-  let declare_me fs = match me_l with
-    | [] -> RawModOps.declare_module id args mtys None fs
-    | [me] -> RawModOps.declare_module id args mtys (Some me) fs
-    | me_l ->
-        ignore (RawModOps.start_module None id args mtys fs);
-        RawIncludeOps.declare_include me_l;
-        RawModOps.end_module ()
+let declare_module id args mty =
+  protect_summaries (RawModOps.declare_module id args mty)
+
+let define_module id args mty me_l =
+  let define_me fs =
+    ignore (RawModOps.start_module None id args mty fs);
+    RawIncludeOps.declare_include me_l;
+    RawModOps.end_module ()
   in
-  protect_summaries declare_me
+  protect_summaries define_me
 
 let start_modtype id args mtys =
   protect_summaries (RawModTypeOps.start_modtype id args mtys)

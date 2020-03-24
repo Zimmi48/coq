@@ -883,7 +883,7 @@ let vernac_declare_module export {loc;v=id} binders_ast mty_ast =
      if not (Option.is_empty export) then
       user_err Pp.(str "Arguments of a functor declaration cannot be exported. Remove the \"Export\" and \"Import\" keywords from every functor argument.")
      else (idl,ty)) binders_ast in
-  let mp = Declaremods.declare_module id binders_ast (Declaremods.Enforce mty_ast) [] in
+  let mp = Declaremods.declare_module id binders_ast mty_ast in
   Dumpglob.dump_moddef ?loc mp "mod";
   Flags.if_verbose Feedback.msg_info (str "Module " ++ Id.print id ++ str " is declared");
   Option.iter (fun export -> vernac_import export [qualid_of_ident id]) export
@@ -916,8 +916,7 @@ let vernac_define_module export {loc;v=id} (binders_ast : module_binder list) mt
            user_err Pp.(str "Arguments of a functor definition can be imported only if the definition is interactive. Remove the \"Export\" and \"Import\" keywords from every functor argument.")
           else (idl,ty)) binders_ast in
        let mp =
-         Declaremods.declare_module
-           id binders_ast mty_ast_o mexpr_ast_l
+         Declaremods.define_module id binders_ast mty_ast_o mexpr_ast_l
        in
        Dumpglob.dump_moddef ?loc mp "mod";
        Flags.if_verbose Feedback.msg_info
