@@ -1,4 +1,4 @@
-# Coq
+# POC
 
 [![GitLab][gitlab-badge]][gitlab-link]
 [![Azure Pipelines][azure-badge]][azure-link]
