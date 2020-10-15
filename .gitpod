@@ -1,1 +1,1 @@
-image: registry.gitlab.com/coq/coq:bionic_coq-V2020-10-12-V89
+image: nixorg/nix:latest
