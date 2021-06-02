@@ -1,47 +1,27 @@
-# How to use?
-
-# If you have Nix installed, you can get in an environment with everything
-# needed to compile Coq and CoqIDE by running:
-# $ nix-shell
-# at the root of the Coq repository.
-
-# How to tweak default arguments?
-
-# nix-shell supports the --arg option (see Nix doc) that allows you for
-# instance to do this:
-# $ nix-shell --arg ocamlPackages "(import <nixpkgs> {}).ocaml-ng.ocamlPackages_4_05" --arg buildIde false
-
-# You can also compile Coq and "install" it by running:
-# $ make clean # (only needed if you have left-over compilation files)
-# $ nix-build
-# at the root of the Coq repository.
-# nix-build also supports the --arg option, so you will be able to do:
-# $ nix-build --arg doInstallCheck false
-# if you want to speed up things by not running the test-suite.
-# Once the build is finished, you will find, in the current directory,
-# a symlink to where Coq was installed.
-
-{ pkgs ? import ./dev/nixpkgs.nix {}
-, ocamlPackages ? pkgs.ocaml-ng.ocamlPackages_4_09
+{ lib, stdenv, hostname, writeText
+, ocamlPackages, python3, time, flock, glib, wrapGAppsHook, pkgconfig
+, antlr4, ncurses, rsync, which, jq, curl, gitFull, gnupg, graphviz, gnome3
 , buildIde ? true
 , buildDoc ? true
 , doInstallCheck ? true
-, shell ? false
-  # We don't use lib.inNixShell because that would also apply
-  # when in a nix-shell of some package depending on this one.
+, shell ? true
+, pname ? "coq-full"
 , coq-version ? "8.14-git"
+, ...
 }:
 
-with pkgs;
-with pkgs.lib;
+#with pkgs;
+with lib;
 
 stdenv.mkDerivation rec {
 
-  name = "coq";
+  inherit pname;
+  version = "dev";
 
   buildInputs = [
     hostname
-    python3 time flock dune_2 # coq-makefile timing tools
+    python3 time # coq-makefile timing tools
+    flock ocamlPackages.dune_2
   ]
   ++ optionals buildIde [
     ocamlPackages.lablgtk3-sourceview3
@@ -58,12 +38,12 @@ stdenv.mkDerivation rec {
   ++ optionals doInstallCheck (
     # Test-suite dependencies
     # ncurses is required to build an OCaml REPL
-    optional (!versionAtLeast ocaml.version "4.07") ncurses
+    optional (!versionAtLeast ocamlPackages.ocaml.version "4.07") ncurses
     ++ [ ocamlPackages.ounit rsync which ]
   )
   ++ optionals shell (
     [ jq curl gitFull gnupg ] # Dependencies of the merging script
-    ++ (with ocamlPackages; [ merlin ocp-indent ocp-index utop ocamlformat ]) # Dev tools
+    ++ (with ocamlPackages; [ merlin ocp-indent ocp-index utop ]) # Dev tools
     ++ [ graphviz ] # Useful for STM debugging
   );
 
@@ -72,15 +52,14 @@ stdenv.mkDerivation rec {
   # ocamlfind looks for zarith when building plugins
   # This follows a similar change in the nixpkgs repo (cf. NixOS/nixpkgs#94230)
   propagatedBuildInputs = with ocamlPackages; [ ocaml findlib zarith ];
+  ocamlBuildInputs = propagatedBuildInputs;
 
   propagatedUserEnvPkgs = with ocamlPackages; [ ocaml findlib ];
 
   src =
-    if shell then null
-    else
-      with builtins; filterSource
-        (path: _:
-           !elem (baseNameOf path) [".git" "result" "bin" "_build" "_build_ci" "_build_vo" "nix"]) ./.;
+    with builtins; filterSource
+      (path: _:
+        !elem (baseNameOf path) [".git" "result" "bin" "_build" "_build_ci" "_build_vo" ".nix"]) ../../..;
 
   preConfigure = ''
     patchShebangs dev/tools/ doc/stdlib
@@ -92,10 +71,12 @@ stdenv.mkDerivation rec {
 
   buildFlags = [ "world" "byte" ] ++ optional buildDoc "doc-html";
 
+  preInstall = ''
+    mkdir -p "$OCAMLFIND_DESTDIR"
+  '';
+
   installTargets =
     [ "install" "install-byte" ] ++ optional buildDoc "install-doc-html";
-
-  createFindlibDestdir = !shell;
 
   postInstall = "ln -s $out/lib/coq-core $OCAMLFIND_DESTDIR/coq-core";
 
