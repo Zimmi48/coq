@@ -26,7 +26,6 @@
 /azure-pipelines.yml @coq/ci-maintainers
 /Makefile.ci         @coq/ci-maintainers
 
-/dev/ci/nix          @coq/nix-maintainers
 *.nix                @coq/nix-maintainers
 
 /dev/ci/user-overlays/*.sh @ghost
