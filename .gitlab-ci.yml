@@ -47,6 +47,7 @@ docker-boot:
     variables:
       - $SKIP_DOCKER == "true"
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   tags:
     - docker
 
@@ -72,6 +73,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   artifacts:
     name: "$CI_JOB_NAME"
@@ -110,6 +112,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   script:
     # flambda can be pretty stack hungry, specially with -O3
@@ -136,6 +139,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   needs:
     - build:edge+flambda:dune:dev
@@ -164,6 +168,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   needs:
     - not-a-real-job
@@ -183,6 +188,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   needs:
     - not-a-real-job
@@ -208,6 +214,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   needs:
     - not-a-real-job
@@ -231,6 +238,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   script:
     - set -e
@@ -256,6 +264,9 @@ before_script:
 
 .platform-template:
   stage: stage-1
+  except:
+    variables:
+      - $ONLY_NIX == "true"
   interruptible: true
   variables:
     PLATFORM: "https://github.com/coq/platform/archive/dev-ci.zip"
@@ -272,6 +283,7 @@ before_script:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   before_script:
     - which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
     - eval $(ssh-agent -s)
@@ -358,6 +370,7 @@ lint:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   script: dev/lint-repository.sh
   variables:
     GIT_DEPTH: "" # we need an unknown amount of history for per-commit linting
@@ -369,6 +382,7 @@ pkg:opam:
   except:
     variables:
       - $ONLY_WINDOWS == "true"
+      - $ONLY_NIX == "true"
   interruptible: true
   # OPAM will build out-of-tree so no point in importing artifacts
   script:
@@ -384,47 +398,43 @@ pkg:opam:
   only: *full-ci
 
 .nix-template:
-  image: nixorg/nix:latest # Minimal NixOS image which doesn't even contain git
-  interruptible: true
   stage: stage-1
+  except:
+    variables:
+      - $ONLY_WINDOWS == "true"
+  only:
+    - master
+    - /^v.*\..*$/
+  interruptible: true
+  image: nixorg/nix:latest # Minimal NixOS image which doesn't even contain git
   variables:
-    # By default we use coq.cachix.org as an extra substituter but this can be overridden
-    EXTRA_SUBSTITUTERS: https://coq.cachix.org
-    EXTRA_PUBLIC_KEYS: coq.cachix.org-1:5QW/wwEnD+l2jvN6QRbRRsa4hBHG3QiQQ26cxu1F5tI=
-    # The following variables should not be overridden
     GIT_STRATEGY: none
-    NIXOS_PUBLIC_KEY: cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-
-  before_script: [] # We don't want to use the shared 'before_script'
-  script:
+    URL: "$CI_PROJECT_URL/-/archive/$CI_COMMIT_SHA.tar.gz"
+  before_script:
     - cat /proc/{cpu,mem}info || true
     # Use current worktree as tmpdir to allow exporting artifacts in case of failure
     - export TMPDIR=$PWD
-    # We are forced to put the public key of cache.nixos.org
-    # because there is no --extra-trusted-public-key option.
-    - nix-build "$CI_PROJECT_URL/-/archive/$CI_COMMIT_SHA.tar.gz" -K --extra-substituters "$EXTRA_SUBSTITUTERS" --trusted-public-keys "$NIXOS_PUBLIC_KEY $EXTRA_PUBLIC_KEYS" | if [ ! -z "$CACHIX_SIGNING_KEY" ]; then cachix push coq; fi
+    # Install Cachix as documented at https://github.com/cachix/cachix
+    - nix-env -iA cachix --prebuilt-only -f https://cachix.org/api/v1/install
+    - cachix use coq
   artifacts:
     name: "$CI_JOB_NAME.logs"
     when: on_failure
     paths:
       - nix-build-coq.drv-0/*/test-suite/logs
-    # Gitlab doesn't support yet "expire_in: never" so we use the instance default
-    # expire_in: never
-
-pkg:nix:deploy:
-  extends: .nix-template
   environment:
     name: cachix
     url: https://coq.cachix.org
-  before_script:
-    # Install Cachix as documented at https://github.com/cachix/cachix
-    - nix-env -iA cachix --prebuilt-only -f https://cachix.org/api/v1/install
-  only:
-    - master
-    - /^v.*\..*$/
-  except:
-    variables:
-      - $ONLY_WINDOWS == "true"
+
+pkg:nix-full:
+  extends: .nix-template
+  script:
+    - nix-build $URL -K | cachix push coq
+
+pkg:nix:
+  extends: .nix-template
+  script:
+    - nix-build $URL --argstr job coq -K | cachix push coq
 
 pkg:nix:deploy:channel:
   extends: .deploy-template
@@ -438,7 +448,7 @@ pkg:nix:deploy:channel:
     variables:
       - $CACHIX_DEPLOYMENT_KEY
   needs:
-    - pkg:nix:deploy
+    - pkg:nix
   script:
     - echo "$CACHIX_DEPLOYMENT_KEY" | tr -d '\r' | ssh-add - > /dev/null
     # Remove all pr branches because they could be missing when we run git fetch --unshallow
@@ -446,15 +456,6 @@ pkg:nix:deploy:channel:
     - git fetch --unshallow
     - git branch -v
     - git push git@github.com:coq/coq-on-cachix "${CI_COMMIT_SHA}":"refs/heads/${CI_COMMIT_REF_NAME}"
-
-pkg:nix:
-  extends: .nix-template
-  except:
-    refs:
-      - master
-      - /^v.*\..*$/
-    variables:
-      - $ONLY_WINDOWS == "true"
 
 doc:refman:
   extends: .doc-template
