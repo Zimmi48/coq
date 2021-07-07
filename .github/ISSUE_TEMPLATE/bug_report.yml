@@ -4,15 +4,15 @@ labels: ["kind: bug", "needs: triage"]
 body:
 - type: markdown
   attributes:
-    value: Thank you for your contribution.
+    value: |
+      Thank you for your contribution.
+
+      It is helpful to explain how to reproduce the bug and what the problem is.
+      If you have a small reproducible example, you can use the second field to provide it.
+      Otherwise, please provide a link to a repository, a gist (https://gist.github.com) or drag-and-drop a `.zip` archive in the field below.
 - type: textarea
   attributes:
     label: Description of the problem
-    description: |
-      It is helpful to explain how to reproduce the bug and what the problem is.
-      If you have a small reproducible example, you can use the next field to provide it.
-      Otherwise, please provide a link to a repository, a gist (https://gist.github.com)
-      or drag-and-drop a `.zip` archive.
     placeholder: Feel free to leave this field empty if you provide a small reproducible example below.
 - type: textarea
   attributes:
