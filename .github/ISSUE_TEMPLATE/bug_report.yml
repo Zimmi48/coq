@@ -13,7 +13,7 @@ body:
 - type: textarea
   attributes:
     label: Description of the problem
-    placeholder: Feel free to leave this field empty if you provide a small reproducible example below.
+    placeholder: What happens and what you would have expected instead.
 - type: textarea
   attributes:
     label: Small Coq file to reproduce the bug
