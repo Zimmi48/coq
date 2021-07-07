@@ -1,0 +1,60 @@
+name: Bug report
+description: Report an unexpected behavior
+labels: ["kind: bug", "needs: triage"]
+body:
+- type: markdown
+  attributes:
+    value: Thank you for your contribution.
+- type: textarea
+  attributes:
+    label: Description of the problem
+    description: |
+      It is helpful to explain how to reproduce the bug and what the problem is.
+      If you have a small reproducible example, you can use the next field to provide it.
+      Otherwise, please provide a link to a repository, a gist (https://gist.github.com)
+      or drag-and-drop a `.zip` archive.
+    placeholder: Feel free to leave this field empty if you provide a small reproducible example below.
+- type: textarea
+  attributes:
+    label: Small Coq file to reproduce the bug
+    placeholder: |
+      Goal True.
+        ok tactic.
+        buggy tactic.
+        (* the last line raises an error or an anomaly *)
+    render: coq
+- type: dropdown
+  attributes:
+    label: Version of Coq where this bug occurs
+    description: |
+      You can get this information by running `coqtop -v`.
+      Feel free to select multiple answers if you can reproduce the bug on several versions of Coq.
+    multiple: true
+    options:
+    - 8.15+alpha
+    - 8.14+alpha
+    - 8.13.2
+    - 8.13.1
+    - 8.13.0
+    - 8.12.2
+    - 8.12.1
+    - 8.12.0
+    - 8.11.2
+    - 8.11.1
+    - 8.11.0
+- type: dropdown
+  attributes:
+    label: Last version of Coq where the bug did not occur.
+    description: You can fill this optional field if the bug is a regression compared to a previous version of Coq.
+    options:
+    - 8.14+alpha
+    - 8.13.2
+    - 8.13.1
+    - 8.13.0
+    - 8.12.2
+    - 8.12.1
+    - 8.12.0
+    - 8.11.2
+    - 8.11.1
+    - 8.11.0
+    - 8.10.2
