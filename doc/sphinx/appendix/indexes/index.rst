@@ -17,6 +17,7 @@ find what you are looking for.
    ../../coq-attrindex
    ../../coq-optindex
    ../../coq-exnindex
+   ../../coq-knownissueindex
    ../../genindex
 
 For reference, here are direct links to the documentation of:

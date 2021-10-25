@@ -139,6 +139,28 @@ Here is the list of all objects of the Coq domain (The symbol :black_nib: indica
           :cmd:`Variant` and :cmd:`Record` get an automatic declaration of
           induction principles.
 
+``.. knownissue::`` A reST directive for known issues.
+    This directive is used to document known issues (confirmed bugs or
+    limitations) that do not look like they will be fixed in time for
+    the next release.
+
+    When a known issue is documented, a link to the Coq bug tracker
+    should always be provided so that interested parties know where to
+    discuss the issue (and what is the canonical reference in case
+    duplicate reports need to be closed).
+
+    Optionally, any text immediately following the ``.. knownissue::`` header is
+    used as the known issue's title. It is strongly recommended to provide one.
+
+    Example::
+
+       .. knownissue:: Hint Cut regexp precedence
+
+          There is no operator precedence during parsing, one can
+          check with :cmd:`Print HintDb` to verify the current cut expression.
+
+          The issue is tracked in `#5206 <https://github.com/coq/coq/issues/5206>`_.
+
 ``.. opt::`` :black_nib: A Coq option (a setting with non-boolean value, e.g. a string or numeric value).
     Example::
 

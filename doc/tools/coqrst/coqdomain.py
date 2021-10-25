@@ -785,6 +785,39 @@ class ExampleDirective(BaseAdmonition):
         self.options['classes'] = ['admonition', 'note']
         return super().run()
 
+class KnownIssueObject(PlainObject):
+
+    """A reST directive for known issues.
+
+    This directive is used to document known issues (confirmed bugs or
+    limitations) that do not look like they will be fixed in time for
+    the next release.
+
+    When a known issue is documented, a link to the Coq bug tracker
+    should always be provided so that interested parties know where to
+    discuss the issue (and what is the canonical reference in case
+    duplicate reports need to be closed).
+
+    The text immediately following the ``.. knownissue::`` header is
+    used as the known issue's title. It is mandatory.
+
+    Example::
+
+       .. knownissue:: Hint Cut regexp precedence
+
+          There is no operator precedence during parsing, one can
+          check with :cmd:`Print HintDb` to verify the current cut expression.
+
+          The issue is tracked in `#5206 <https://github.com/coq/coq/issues/5206>`_.
+    """
+    subdomain = "knownissue"
+    index_suffix = "(known issue)"
+    annotation = "Known Issue"
+
+    def run(self):
+        self.options['classes'] = ['admonition', 'warning']
+        return super().run()
+
 class PreambleDirective(Directive):
     r"""A reST directive to include a TeX file.
 
@@ -1166,6 +1199,9 @@ class CoqGallinaIndex(CoqSubdomainsIndex):
 class CoqExceptionIndex(CoqSubdomainsIndex):
     name, localname, shortname, subdomains = "exnindex", "Errors and Warnings Index", "errors", ["exn", "warn"]
 
+class CoqKnownIssueIndex(CoqSubdomainsIndex):
+    name, localname, shortname, subdomains = "knownissueindex", "Known Issues Index", "known issues", ["knownissue"]
+
 class IndexXRefRole(XRefRole):
     """A link to one of our domain-specific indices."""
     lowercase = True
@@ -1289,6 +1325,7 @@ class CoqDomain(Domain):
         'prodn': ObjType('prodn', 'prodn'),
         'exn': ObjType('exn', 'exn'),
         'warn': ObjType('warn', 'exn'),
+        'knownissue': ObjType('knownissue', 'knownissue'),
         'index': ObjType('index', 'index', searchprio=-1)
     }
 
@@ -1308,6 +1345,7 @@ class CoqDomain(Domain):
         'prodn' : ProductionObject,
         'exn': ExceptionObject,
         'warn': WarningObject,
+        'knownissue': KnownIssueObject,
     }
 
     roles = {
@@ -1322,6 +1360,7 @@ class CoqDomain(Domain):
         'prodn' : XRefRole(warn_dangling=True),
         'exn': XRefRole(warn_dangling=True),
         'warn': XRefRole(warn_dangling=True),
+        'knownissue': XRefRole(warn_dangling=True),
         # This one is special
         'index': IndexXRefRole(),
         # These are used for highlighting
@@ -1329,7 +1368,15 @@ class CoqDomain(Domain):
         'g': CoqCodeRole
     }
 
-    indices = [CoqVernacIndex, CoqTacticIndex, CoqOptionIndex, CoqGallinaIndex, CoqExceptionIndex, CoqAttributeIndex]
+    indices = [
+        CoqVernacIndex,
+        CoqTacticIndex,
+        CoqOptionIndex,
+        CoqGallinaIndex,
+        CoqExceptionIndex,
+        CoqAttributeIndex,
+        CoqKnownIssueIndex
+    ]
 
     data_version = 1
     initial_data = {
@@ -1346,6 +1393,7 @@ class CoqDomain(Domain):
             'prodn' : {},
             'exn': {},
             'warn': {},
+            'knownissue': {},
         }
     }
 

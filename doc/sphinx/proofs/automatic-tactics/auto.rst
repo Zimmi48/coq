@@ -552,10 +552,12 @@ Creating Hints
          leading `( _* )` to match the tail of the path. (Note that `(_*)`
          misparses since `*)` would end a comment.)
 
-      .. warning::
+      .. knownissue:: Hint Cut regexp precedence
 
          There is no operator precedence during parsing, one can
          check with :cmd:`Print HintDb` to verify the current cut expression.
+
+         The issue is tracked in `#5206 <https://github.com/coq/coq/issues/5206>`_.
 
       .. warning::
 
