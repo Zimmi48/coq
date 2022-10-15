@@ -53,12 +53,12 @@ Lemma not_NoDup (l: list A):
     ~ NoDup l -> exists a l1 l2 l3, l = l1++a::l2++a::l3.
 Proof using A dec.
 intro H0. induction l as [|a l IHl].
-- contradiction H0; constructor.
+- contradict H0; constructor.
 - destruct (NoDup_decidable l) as [H1|H1].
   + destruct (In_decidable a l) as [H2|H2].
     * destruct (in_split _ _ H2) as (l1 & l2 & ->).
       now exists a, nil, l1, l2.
-    * now contradiction H0; constructor.
+    * now contradict H0; constructor.
   + destruct (IHl H1) as (b & l1 & l2 & l3 & ->).
     now exists b, (a::l1), l2, l3.
 Qed.

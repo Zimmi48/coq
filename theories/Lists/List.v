@@ -764,7 +764,7 @@ Section Elts.
   Lemma remove_length_lt : forall l x, In x l -> length (remove x l) < length l.
   Proof.
     intro l; induction l as [|y l IHl]; simpl; intros x Hin.
-    - contradiction Hin.
+    - destruct Hin.
     - destruct Hin as [-> | Hin].
       + destruct (eq_dec x x); [|easy].
         apply Nat.lt_succ_r, remove_length_le.
@@ -837,8 +837,9 @@ Section Elts.
   Proof.
     intros ->.
     rewrite ? count_occ_app; cbn.
-    destruct (eq_dec y y) as [Heq | Hneq];
-      [ apply Nat.add_succ_r | now contradiction Hneq ].
+    destruct (eq_dec y y) as [Heq | Hneq].
+    - apply Nat.add_succ_r.
+    - contradiction.
   Qed.
 
   Lemma count_occ_elt_neq l1 l2 x y : x <> y ->
@@ -846,7 +847,7 @@ Section Elts.
   Proof.
     intros Hxy.
     rewrite ? count_occ_app; cbn.
-    now destruct (eq_dec x y) as [Heq | Hneq]; [ contradiction Hxy | ].
+    now destruct (eq_dec x y) as [Heq | Hneq].
   Qed.
 
   Lemma count_occ_bound x l : count_occ l x <= length l.
@@ -1151,8 +1152,8 @@ Section Map.
     - specialize (Hrec x).
       destruct (decA a x) as [H1|H1], (decB (f a) (f x)) as [H2|H2].
       + rewrite Hrec. reflexivity.
-      + contradiction H2. rewrite H1. reflexivity.
-      + specialize (Hfinjective H2). contradiction H1.
+      + contradict H2. rewrite H1. reflexivity.
+      + specialize (Hfinjective H2). contradiction.
       + assumption.
   Qed.
 

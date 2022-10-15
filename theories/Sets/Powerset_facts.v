@@ -344,7 +344,7 @@ Section Sets_as_an_algebra.
     Included A s1 s2 -> Setminus A s1 s2 = Empty_set A.
   Proof.
     intros. apply Extensionality_Ensembles. split.
-      * intros x H1. inversion_clear H1. contradiction H2. intuition.
+      * intros x H1. inversion_clear H1. contradict H2. intuition.
       * intuition.
   Qed.
 

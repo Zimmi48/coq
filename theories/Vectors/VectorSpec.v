@@ -159,7 +159,7 @@ Proof.
 apply (Fin.rect2 (fun n p1 p2 => forall v a b,
   p1 <> p2 -> replace (replace v p1 a) p2 b = replace (replace v p2 b) p1 a)).
 - intros n v a b Hneq.
-  now contradiction Hneq.
+  contradiction.
 - intros n p2 v; revert n v p2.
   refine (@rectS _ _ _ _); auto.
 - intros n p1 v; revert n v p1.

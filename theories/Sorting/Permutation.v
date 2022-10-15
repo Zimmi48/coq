@@ -673,7 +673,7 @@ Proof.
   intros l1 l2 l3 l4 a HP Hf.
   apply (Permutation_in a), in_app_or in HP; [| now apply in_elt].
   destruct HP as [HP%in_split | (x & Heq & ?)%in_map_iff]; trivial; subst.
-  now contradiction (Hf x).
+  now specialize (Hf x).
 Qed.
 
 Global Instance Permutation_flat_map (g : A -> list B) :
