@@ -14,7 +14,7 @@
 .PHONY: refman-html refman-pdf corelib-html apidoc     # Documentation targets
 .PHONY: test-suite dev-targets
 .PHONY: fmt ocheck obuild ireport clean               # Maintenance targets
-.PHONY: dunestrap release install                 # Miscellaneous
+.PHONY: release install                 # Miscellaneous
 
 # We don't allow parallel build here, this is just a placehoder for
 # dune commands for the most part
@@ -44,7 +44,6 @@ help:
 	@echo "  - coqide: build coqide binary in developer mode"
 	@echo "  - check:  build all ML files as fast as possible"
 	@echo "  - test-suite: run Coq's test suite [env NJOBS=N to set job parallelism]"
-	@echo "  - dunestrap: Generate the dune rules for vo files"
 	@echo ""
 	@echo "  Note: running ./configure is not recommended for developers,"
 	@echo "        see dev/doc/build-system.dune.md for more info"
@@ -90,7 +89,6 @@ help-install:
 	@echo "documentation for more details. A quick install of Coq alone can be done with"
 	@echo ""
 	@echo " $$ ./configure -prefix <install_prefix>"
-	@echo " $$ make dunestrap"
 	@echo " $$ dune build -p rocq-runtime,coq-core,rocq-core"
 	@echo " $$ dune install --prefix=<install_prefix> rocq-runtime coq-core rocq-core"
 	@echo ""
@@ -121,50 +119,12 @@ help-install:
 	@echo " Note that building a package in release mode ignores other packages present in"
 	@echo " the worktree. See Dune documentation for more information."
 
-# We setup the root even in dev mode, to avoid some problems.  We used
-# this in the past to workaround a bug in opam, but the bug was that
-# we didn't pass `-p` to the dune build below.
-#
-# This would be fixed once dune can directly use `(include
-# theories_dune)` in our files.
-DUNESTRAPOPT=--root .
-
-# We regenerate always as to correctly track deps, can do better
-# We do a single call to dune as to avoid races and locking
-ifneq ($(COQ_SPLIT),) # avoid depending on local rocq-runtime
-_build/default/theories_dune_split _build/default/ltac2_dune_split .dune-stamp: FORCE
-	dune build $(DUNEOPT) $(DUNESTRAPOPT) theories_dune_split ltac2_dune_split
-	touch .dune-stamp
-
-theories/dune: .dune-stamp
-	cp -a _build/default/theories_dune_split $@ && chmod +w $@
-
-user-contrib/Ltac2/dune: .dune-stamp
-	cp -a _build/default/ltac2_dune_split $@ && chmod +w $@
-else
-_build/default/theories_dune _build/default/ltac2_dune .dune-stamp: FORCE
-	dune build $(DUNEOPT) $(DUNESTRAPOPT) theories_dune ltac2_dune
-	touch .dune-stamp
-
-theories/dune: .dune-stamp
-	cp -a _build/default/theories_dune $@ && chmod +w $@
-
-user-contrib/Ltac2/dune: .dune-stamp
-	cp -a _build/default/ltac2_dune $@ && chmod +w $@
-endif
-
-FORCE: ;
-
-DUNE_FILES=theories/dune user-contrib/Ltac2/dune
-
-dunestrap: $(DUNE_FILES)
-
-states: dunestrap
+states:
 	dune build $(DUNEOPT) dev/shim/coqtop
 
 MAIN_TARGETS:=rocq-runtime.install coq-core.install rocq-core.install coqide-server.install
 
-world: dunestrap
+world:
 	dune build $(DUNEOPT) $(MAIN_TARGETS)
 
 coqide:
@@ -176,22 +136,22 @@ watch:
 check:
 	dune build $(DUNEOPT) @check
 
-test-suite: dunestrap
+test-suite:
 	dune runtest --no-buffer $(DUNEOPT)
 
-refman-html: dunestrap
+refman-html:
 	dune build --no-buffer @refman-html
 
-refman-pdf: dunestrap
+refman-pdf:
 	dune build --no-buffer @refman-pdf
 
-corelib-html: dunestrap
+corelib-html:
 	dune build @corelib-html
 
 apidoc:
 	dune build $(DUNEOPT) @doc
 
-release: theories/dune
+release:
 	@echo "release target is deprecated, use dune directly"
 	dune build $(DUNEOPT) -p coq
 
@@ -207,7 +167,7 @@ fmt:
 ocheck:
 	dune build $(DUNEOPT) @check --workspace=dev/dune-workspace.all
 
-obuild: dunestrap
+obuild:
 	dune build $(DUNEOPT) @default --workspace=dev/dune-workspace.all
 
 ireport:
@@ -215,7 +175,6 @@ ireport:
 	dune build $(DUNEOPT) @install --profile=ireport
 
 clean:
-	rm -f .dune-stamp theories/dune user-contrib/Ltac2/dune
 	dune clean
 
 # docgram
@@ -235,14 +194,14 @@ CONTEXT=_build/install/default
 
 # XXX: Port this to a dune alias so the build is hygienic!
 .PHONY: plugin-tutorial
-plugin-tutorial: dunestrap
+plugin-tutorial:
 	dune build $(CONTEXT)/lib/rocq-runtime/META $(CONTEXT)/lib/coq-core/META rocq-runtime.install coq-core.install theories/Init/Prelude.vo
 	+$(MAKE) OCAMLPATH=$(shell pwd)/$(CONTEXT)/lib/ COQBIN=$(shell pwd)/$(CONTEXT)/bin/ ROCQRUNTIMELIB=$(shell pwd)/$(CONTEXT)/lib/rocq-runtime ROCQLIB=$(shell pwd)/_build/default/ -C doc/plugin_tutorial
 
 # This is broken in a very weird way with a permission error... see
 # the rule in doc/plugin_tutorial/dune:
 
-# plugin-tutorial: dunestrap
+# plugin-tutorial:
 #	dune build @plugin-tutorial
 
 # ci-* targets
